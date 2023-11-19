@@ -1,0 +1,99 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "MonsterCharacter.h"
+
+#include "AI_MonsterController.h"
+#include "FlickeringLight.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Perception/PawnSensingComponent.h"
+#include "Sound/SoundCue.h"
+
+
+
+// Sets default values
+AMonsterCharacter::AMonsterCharacter()
+{
+ 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
+
+	PawnSensingComponent->bOnlySensePlayers = true;
+	PawnSensingComponent->SightRadius = 1500;
+	PawnSensingComponent->SetPeripheralVisionAngle(65.f);
+	PawnSensingComponent->HearingThreshold = 40000;
+	PawnSensingComponent->LOSHearingThreshold = 50000;
+	FlickerRadius = 1500;
+	
+}
+
+// Called when the game starts or when spawned
+void AMonsterCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// This actor handles flickering lights by distance
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFlickeringLight::StaticClass(), FoundFlickeringLights);
+	
+	Scream = LoadObject<USoundCue>(nullptr, TEXT("/Game/Audio/Monster/SC_MonsterScream.SC_MonsterScream"));
+	HostileScream = LoadObject<USoundCue>(nullptr, TEXT("/Game/Audio/BL-FREE22_Creatures_Designed_Cue.BL-FREE22_Creatures_Designed_Cue"));
+
+	this->OnTakeAnyDamage.AddDynamic(this, &AMonsterCharacter::HandleDamage);
+}
+
+void AMonsterCharacter::MonsterScream() const
+{
+	UGameplayStatics::PlaySoundAtLocation(this, Scream, GetActorLocation(), GetActorRotation());
+}
+
+void AMonsterCharacter::MonsterHostileScream() const
+{
+	UGameplayStatics::SpawnSoundAttached(HostileScream, RootComponent);
+}
+
+void AMonsterCharacter::HandleDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
+	AController* InstigatedBy, AActor* DamageCauser)
+{
+	AAI_MonsterController* MyController = Cast<AAI_MonsterController>(GetController());
+	if (MyController)
+	{
+		MyController->StartEscaping();
+	}
+}
+
+void AMonsterCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (FoundFlickeringLights.Num() > 0)
+	{
+		for (AActor* Light : FoundFlickeringLights)
+		{
+			if (Light != nullptr)
+			{
+				FVector LightLocation = Light->GetActorLocation();
+				FVector MyLocation = GetActorLocation();
+
+				double VectorDifference = UKismetMathLibrary::Vector_Distance2D(LightLocation, MyLocation);
+				
+				AFlickeringLight* FlickeringLight = Cast<AFlickeringLight>(Light);
+			
+				if (VectorDifference <= FlickerRadius)
+				{
+					FlickeringLight->ReceiveDistance(VectorDifference, FlickerRadius);
+					FlickeringLight->SetShouldFlicker(true);
+				}
+				else
+				{
+					FlickeringLight->SetShouldFlicker(false);
+				}
+			}
+		}
+	}
+	
+	//DrawDebugSphere(GetWorld(), GetActorLocation(), 32.f, 12, FColor::White, false, 0, 0, 1);
+}
+
+
