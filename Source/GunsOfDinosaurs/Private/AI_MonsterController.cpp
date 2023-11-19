@@ -100,7 +100,7 @@ void AAI_MonsterController::InitMonster()
 {
 	TimePawnSeen = 0.f;
 	SearchAttempts = 0;
-	MaxSearchAttempts = 4;
+	MaxSearchAttempts = 2;
 	SetNewState(EMonsterState::Idle, nullptr);
 	HuntedPawn = UGameplayStatics::GetPlayerPawn(this, 0);
 }
@@ -203,6 +203,8 @@ FNavLocation AAI_MonsterController::HuntAroundPlayerLocation()
 		else
 		{
 			Origin = UGameplayStatics::GetPlayerCharacter(this, 0)->GetActorLocation();
+			LastKnownPlayerLocation = Origin;
+			bSeenPlayer = true;
 		}
 		
 		UE_LOG(LogTemp, Display, TEXT("Radius for search...%f"), Radius)
@@ -259,14 +261,15 @@ void AAI_MonsterController::Roam()
 void AAI_MonsterController::ReturnToVent()
 {
 	CharacterMovementComponent->MaxWalkSpeed = 350;
-	if (SearchAttempts <= MaxSearchAttempts)
+	if (SearchAttempts <= MaxSearchAttempts && bSeenPlayer)
 	{
-		UE_LOG(LogTemp, Display, TEXT("Searching for a player nearby...%d"), SearchAttempts)
+		UE_LOG(LogTemp, Display, TEXT("Searching for a seen player nearby...%d"), SearchAttempts)
 		SearchAttempts++;
 		Roam();
 	}
-	else
+	else if (SearchAttempts > MaxSearchAttempts)
 	{
+		bSeenPlayer = false;
 		UE_LOG(LogTemp, Display, TEXT("Returning To Vent after Search Attempts: %i"), SearchAttempts)
 		bIsHostile = false;
 		SearchAttempts = 0;
@@ -443,7 +446,7 @@ void AAI_MonsterController::StartSearching(FNavLocation LocationToSearch)
 {
 	UE_LOG(LogTemp, Display, TEXT("Starting Search"))
 	MonsterCharacter->MonsterScream();
-	CharacterMovementComponent->MaxWalkSpeed = 350;
+	CharacterMovementComponent->MaxWalkSpeed = 200;
 	HuntLocation(LocationToSearch);
 }
 
