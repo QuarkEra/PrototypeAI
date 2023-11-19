@@ -26,6 +26,8 @@ AMonsterCharacter::AMonsterCharacter()
 	PawnSensingComponent->HearingThreshold = 40000;
 	PawnSensingComponent->LOSHearingThreshold = 50000;
 	FlickerRadius = 1500;
+
+	//PawnSensingComponent->SetSensingUpdatesEnabled(false);
 	
 }
 

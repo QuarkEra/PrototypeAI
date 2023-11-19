@@ -87,17 +87,25 @@ void AAI_MonsterController::BeginPlay()
 		}
 	}
 
+	SensingComponent->SetSensingUpdatesEnabled(false);
+	MonsterCharacter->SetActorHiddenInGame(true);
+	MonsterCharacter->SetActorEnableCollision(false);
+	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	RoamTimer = 15.f;
 	PlayerSeenTimer = 4.5f;
 	MaxIdleTimer = 35.f;
 	PostHostilityTimer = 1.5f;
 	OutOfVentTimer = 15.f;
 	
-	InitMonster();
 }
 
 void AAI_MonsterController::InitMonster()
 {
+	MonsterCharacter->SetActorHiddenInGame(false);
+	SensingComponent->SetSensingUpdatesEnabled(true);
+	MonsterCharacter->SetActorEnableCollision(true);
+	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	TimePawnSeen = 0.f;
 	SearchAttempts = 0;
 	MaxSearchAttempts = 2;
@@ -268,6 +276,15 @@ void AAI_MonsterController::ReturnToVent()
 		Roam();
 	}
 	else if (SearchAttempts > MaxSearchAttempts)
+	{
+		bSeenPlayer = false;
+		UE_LOG(LogTemp, Display, TEXT("Returning To Vent after Search Attempts: %i"), SearchAttempts)
+		bIsHostile = false;
+		SearchAttempts = 0;
+		TimePawnSeen = 0.f;
+		SetNewState(EMonsterState::Idle, nullptr);
+	}
+	else // hunted a noise, no other disturbance detected
 	{
 		bSeenPlayer = false;
 		UE_LOG(LogTemp, Display, TEXT("Returning To Vent after Search Attempts: %i"), SearchAttempts)

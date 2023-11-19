@@ -78,8 +78,6 @@ protected:
 
 	virtual void BeginPlay() override;
 	
-	void InitMonster();
-	
 	UFUNCTION()
 	void OnPawnSeen(APawn* PawnSeen);
 	UFUNCTION()
@@ -148,6 +146,8 @@ public:
 	
 	[[nodiscard]] APawn* GetHuntedPawn() const;
 
+	UFUNCTION(BlueprintCallable)
+	void InitMonster();
 	
 	void EnterVent();
 	void ExitVent();
