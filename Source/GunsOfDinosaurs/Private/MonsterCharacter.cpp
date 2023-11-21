@@ -82,14 +82,16 @@ void AMonsterCharacter::Tick(float DeltaTime)
 				
 				AFlickeringLight* FlickeringLight = Cast<AFlickeringLight>(Light);
 			
-				if (VectorDifference <= FlickerRadius)
+				if (VectorDifference <= PawnSensingComponent->SightRadius)
 				{
-					FlickeringLight->ReceiveDistance(VectorDifference, FlickerRadius);
+					FlickeringLight->ReceiveDistance(VectorDifference, PawnSensingComponent->SightRadius);
 					FlickeringLight->SetShouldFlicker(true);
+					FlickeringLight->ShouldChangeIntensity = true;
 				}
 				else
 				{
 					FlickeringLight->SetShouldFlicker(false);
+					FlickeringLight->ShouldChangeIntensity = false;
 				}
 			}
 		}
