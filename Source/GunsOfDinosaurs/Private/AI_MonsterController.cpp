@@ -88,11 +88,11 @@ void AAI_MonsterController::BeginPlay()
 	}
 
 	SensingComponent->SetSensingUpdatesEnabled(false);
-	MonsterCharacter->SetActorHiddenInGame(true);
+	MonsterCharacter->GetMesh()->SetVisibility(false);
 	MonsterCharacter->SetActorEnableCollision(false);
 	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	RoamTimer = 15.f;
+	RoamTimer = 10.f;
 	PlayerSeenTimer = 4.5f;
 	MaxIdleTimer = 35.f;
 	PostHostilityTimer = 1.5f;
@@ -268,9 +268,9 @@ void AAI_MonsterController::Roam()
 
 void AAI_MonsterController::ReturnToVent()
 {
-	CharacterMovementComponent->MaxWalkSpeed = 350;
 	if (SearchAttempts <= MaxSearchAttempts && bSeenPlayer)
 	{
+		CharacterMovementComponent->MaxWalkSpeed = 250;
 		UE_LOG(LogTemp, Display, TEXT("Searching for a seen player nearby...%d"), SearchAttempts)
 		SearchAttempts++;
 		Roam();
@@ -463,7 +463,7 @@ void AAI_MonsterController::StartSearching(FNavLocation LocationToSearch)
 {
 	UE_LOG(LogTemp, Display, TEXT("Starting Search"))
 	MonsterCharacter->MonsterScream();
-	CharacterMovementComponent->MaxWalkSpeed = 200;
+	CharacterMovementComponent->MaxWalkSpeed = 150;
 	HuntLocation(LocationToSearch);
 }
 
@@ -510,9 +510,10 @@ void AAI_MonsterController::EnterVent()
 	SetWantsToVent(false);
 	bSeenPlayer = false;
 	GetWorld()->GetTimerManager().ClearTimer(PlayerSeen_TimerHandle);
-	MonsterCharacter->SetActorHiddenInGame(true);
+	MonsterCharacter->GetMesh()->SetVisibility(false);
 	MonsterCharacter->SetActorEnableCollision(false);
 	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	CharacterMovementComponent->StopActiveMovement();
 	SensingComponent->SetSensingUpdatesEnabled(true);
 	SensingComponent->SightRadius = 0;
 	GetWorld()->GetTimerManager().SetTimer(MaxIdle_TimerHandle, this, &AAI_MonsterController::PrepareToSearch, MaxIdleTimer);
@@ -521,7 +522,7 @@ void AAI_MonsterController::EnterVent()
 void AAI_MonsterController::ExitVent()
 {
 	SetWantsToVent(false);
-	MonsterCharacter->SetActorHiddenInGame(false);
+	MonsterCharacter->GetMesh()->SetVisibility(true);
 	MonsterCharacter->SetActorEnableCollision(true);
 	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SensingComponent->SetSensingUpdatesEnabled(true);
