@@ -37,10 +37,10 @@ public:
 	double FlickerRadius;
 	double FlickerRate;
 
-	double LightMaxIntensity;
-	double LightIntensity;
-	void SetIntensity(double NewIntensity);
-	bool ShouldChangeIntensity;
+	//double LightMaxIntensity;
+	//double LightIntensity;
+	//void SetIntensity(double NewIntensity);
+	//bool ShouldChangeIntensity;
 
 protected:
 

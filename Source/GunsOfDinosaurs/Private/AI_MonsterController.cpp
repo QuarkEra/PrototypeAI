@@ -4,6 +4,7 @@
 #include "AI_MonsterController.h"
 
 #include "GodVent.h"
+#include "Director.h"
 #include "MonsterCharacter.h"
 #include "NavigationSystem.h"
 #include "GameFramework/Character.h"
@@ -12,6 +13,14 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Perception/PawnSensingComponent.h"
 
+
+void AAI_MonsterController::ReceiveNewDirector(ADirector* NewDirector)
+{
+	if (ensure(NewDirector != nullptr))
+	{
+		this->MyDirector = NewDirector;
+	}
+}
 
 const FVector& AAI_MonsterController::GetLastKnownPlayerLocation() const
 {
@@ -92,7 +101,7 @@ void AAI_MonsterController::BeginPlay()
 	MonsterCharacter->SetActorEnableCollision(false);
 	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	RoamTimer = 10.f;
+	RoamTimer = 15.f;
 	PlayerSeenTimer = 4.5f;
 	MaxIdleTimer = 35.f;
 	PostHostilityTimer = 1.5f;
@@ -120,7 +129,8 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 	LastKnownPlayerLocation = PawnSeen->GetActorLocation();
 	
 	UE_LOG(LogTemp, Display, TEXT("%d Search Attempts"), SearchAttempts)
-		
+
+	GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
 	if (CurrentState != EMonsterState::Hostile)
 	{
 		HuntedPawn = PawnSeen;
@@ -137,6 +147,13 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 		
 		if (TimePawnSeen >= 0.25f)
 		{
+			GetWorldTimerManager().ClearTimer(Roam_TimerHandle);
+			
+			// Increases Menace when Pawn is visible to monster
+			MyDirector->ChangeMenaceGauge(TimePawnSeen * 2);
+			float MG = MyDirector->CheckMenaceGauge();
+			UE_LOG(LogTemp, Display, TEXT("Looking Around, Menace Gauge: %f"), MG)
+			
 			bIsHostile = true;
 			SearchAttempts = 0;
 			MonsterCharacter->MonsterHostileScream();
@@ -163,6 +180,10 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 void AAI_MonsterController::OnNoiseHeard(APawn* HeardPawn, const FVector& NoiseLocation, float Volume)
  {
 	NoiseHeardLocation = NoiseLocation;
+
+	// Small MG increment for player making noise
+	MyDirector->ChangeMenaceGauge(20.f);
+	
 	if (HeardPawn != nullptr)
 	{
 		HuntedPawn = HeardPawn;
@@ -259,8 +280,7 @@ void AAI_MonsterController::StartRoamingFromHostile()
 }
 
 void AAI_MonsterController::Roam()
-{
-	
+{	
 	const FNavLocation Location = HuntAroundPlayerLocation();
 	HuntLocation(Location);
 	GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
@@ -268,22 +288,24 @@ void AAI_MonsterController::Roam()
 
 void AAI_MonsterController::ReturnToVent()
 {
+	MyDirector->GetNewAction();
+	/*
 	if (SearchAttempts <= MaxSearchAttempts && bSeenPlayer)
 	{
-		CharacterMovementComponent->MaxWalkSpeed = 250;
-		UE_LOG(LogTemp, Display, TEXT("Searching for a seen player nearby...%d"), SearchAttempts)
-		SearchAttempts++;
-		Roam();
+		MyDirector->
 	}
 	else if (SearchAttempts > MaxSearchAttempts)
 	{
+		UE_LOG(LogTemp, Display, TEXT("Returning To Vent after Search Attempts: %i, SearchAttempts too high"), SearchAttempts)
 		bSeenPlayer = false;
-		UE_LOG(LogTemp, Display, TEXT("Returning To Vent after Search Attempts: %i"), SearchAttempts)
 		bIsHostile = false;
 		SearchAttempts = 0;
 		TimePawnSeen = 0.f;
 		SetNewState(EMonsterState::Idle, nullptr);
 	}
+	////////////////////////////////////////////////////////////////////
+	// Director now doing this
+	////////////////////////////////////////////////////////////////////
 	else // hunted a noise, no other disturbance detected
 	{
 		bSeenPlayer = false;
@@ -293,6 +315,7 @@ void AAI_MonsterController::ReturnToVent()
 		TimePawnSeen = 0.f;
 		SetNewState(EMonsterState::Idle, nullptr);
 	}
+	*/
 }
 
 AGodVent* AAI_MonsterController::GetNearestVentToHideIn()
@@ -405,7 +428,7 @@ void AAI_MonsterController::SetNewState(EMonsterState NewState, APawn* PawnHunte
 		StartIdle();
 		break;
 	case EMonsterState::Searching:
-		StartSearching(RandomLocationToSearch);
+		LookAround();
 		break;
 	case EMonsterState::Hunting:
 		StartHunting(PawnHunted);
@@ -459,12 +482,24 @@ void AAI_MonsterController::PrepareToSearch()
 	}
 }
 
+void AAI_MonsterController::LookAround()
+{
+	if (NavSys)
+	{
+		float MG = MyDirector->CheckMenaceGauge();
+		UE_LOG(LogTemp, Display, TEXT("Looking Around, Menace Gauge: %f"), MG)
+		FNavLocation NewLocation;
+		NavSys->GetRandomPoint(NewLocation);
+		StartSearching(NewLocation);
+	}
+}
+
 void AAI_MonsterController::StartSearching(FNavLocation LocationToSearch)
 {
 	UE_LOG(LogTemp, Display, TEXT("Starting Search"))
-	MonsterCharacter->MonsterScream();
-	CharacterMovementComponent->MaxWalkSpeed = 150;
+	CharacterMovementComponent->MaxWalkSpeed = 200;
 	HuntLocation(LocationToSearch);
+	GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
 }
 
 void AAI_MonsterController::StartHunting(const APawn* PawnHunted)
@@ -477,6 +512,9 @@ void AAI_MonsterController::StartHunting(const APawn* PawnHunted)
 
 void AAI_MonsterController::BecomeHostile(const APawn* PawnToAttack)
 {
+	// 10 points per Hostile response
+	MyDirector->ChangeMenaceGauge(10.f);
+	
 	GetWorld()->GetTimerManager().ClearTimer(PlayerSeen_TimerHandle);
 	UE_LOG(LogTemp, Display, TEXT("Becoming Hostile"))
 	CharacterMovementComponent->MaxWalkSpeed = 660;

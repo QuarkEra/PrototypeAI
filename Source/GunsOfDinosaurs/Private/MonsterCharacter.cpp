@@ -86,12 +86,12 @@ void AMonsterCharacter::Tick(float DeltaTime)
 				{
 					FlickeringLight->ReceiveDistance(VectorDifference, PawnSensingComponent->SightRadius);
 					FlickeringLight->SetShouldFlicker(true);
-					FlickeringLight->ShouldChangeIntensity = true;
+					//FlickeringLight->ShouldChangeIntensity = true;
 				}
 				else
 				{
 					FlickeringLight->SetShouldFlicker(false);
-					FlickeringLight->ShouldChangeIntensity = false;
+					//FlickeringLight->ShouldChangeIntensity = false;
 				}
 			}
 		}

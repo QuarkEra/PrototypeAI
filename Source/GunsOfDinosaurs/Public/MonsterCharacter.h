@@ -28,7 +28,7 @@ protected:
 	virtual void BeginPlay() override;
 
 protected:
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	UPawnSensingComponent* PawnSensingComponent;
 	UPROPERTY(EditAnywhere)
 	double FlickerRadius;
