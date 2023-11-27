@@ -6,11 +6,10 @@
 #include "AI_MonsterController.h"
 #include "MonsterCharacter.h"
 #include "NavigationSystem.h"
-#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
-ADirector::ADirector()
+ADirector::ADirector(): MonsterCharacter(nullptr), MonsterAI(nullptr), NavSys(nullptr), MenaceGauge(0)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -42,11 +41,6 @@ float ADirector::CheckMenaceGauge() const
 	return MenaceGauge;
 }
 
-void ADirector::GetNewAction()
-{
-	GiveNewTask();
-}
-
 void ADirector::GiveNewTask()
 {
 	if (MenaceGauge > 66)
@@ -55,6 +49,7 @@ void ADirector::GiveNewTask()
 	}
 	else if (MenaceGauge <= 65)
 	{
+		MonsterAI->FillNavPoints(TempLocation);
 		MonsterAI->LookAround();
 	}
 }

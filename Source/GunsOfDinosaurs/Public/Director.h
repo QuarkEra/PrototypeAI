@@ -22,8 +22,8 @@ public:
 	void ChangeMenaceGauge(float DeltaMenace);
 	float CheckMenaceGauge() const;
 
-	void GetNewAction();
-	
+	void GiveNewTask();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -37,9 +37,11 @@ protected:
 	UNavigationSystemV1* NavSys;
 
 private:
+
+	FNavLocation TempLocation;
 	UPROPERTY(VisibleAnywhere)
 	float MenaceGauge;
-	void GiveNewTask();
+	
 	void BackOff();
 	// Still undecided on how much control to give Director this early in introduction
 	//FNavLocation GetRandomPointsAroundPlayer(APawn* PlayerPawn);

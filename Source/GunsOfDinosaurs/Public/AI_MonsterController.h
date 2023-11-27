@@ -11,12 +11,19 @@ class AGodVent;
 class UNavigationSystemV1;
 class AMonsterCharacter;
 class UCharacterMovementComponent;
+class UPawnSensingComponent;
+
+
 
 UENUM()
 enum class EMonsterState : uint8
 {
 	Idle,
 	Venting, // @TODO: DELETE VENTING, was not even used prototyping
+	Wandering_Out_Of_Vent,
+	Wandering_In_Vent,
+	Hunting_Out_Of_Vent,
+	Hunting_In_Vent,
 	Searching, // new for randomly leaving a vent to search for a player in a radial FNavLocation
 	Roaming,
 	Hunting,
@@ -32,11 +39,10 @@ enum class EMonsterState : uint8
 	// searching/distracted, 
 };
 
-
-class UPawnSensingComponent;
 /**
 *
 */
+
 UCLASS()
 class GUNSOFDINOSAURS_API AAI_MonsterController : public AAIController
 {
@@ -70,7 +76,8 @@ protected:
 public:
 	void ReceiveNewDirector(ADirector* NewDirector);
 	
-
+	bool bInVent;
+	
 protected:
 	// Timers will be replaced with a manager Actor that is placed in the scene
 
@@ -161,7 +168,6 @@ protected:
 
 	virtual void BeginPlay() override;
 
-
 	UPROPERTY()
 	APawn* HuntedPawn;
 	UPROPERTY()
@@ -176,6 +182,22 @@ protected:
 	TArray<AActor*> VentActors;
 	UPROPERTY()
 	UNavigationSystemV1* NavSys;
+
+	void GetNewAction();
+
+	TArray<FNavLocation> NavPoints;
+	UPROPERTY(EditAnywhere)
+	int PlacesToSearch;
+
+	void GetNextNavPoint();
+	int NavPointIndex;
+	FNavLocation NextPoint;
+	FNavLocation BacktrackPoint;
+	FNavLocation LastPoint;
+	bool bTravellingToPoint;
+	
+	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
+	FTimerHandle TH_FailedMovement;
 
 public:
 	// I trust Rider with whatever this extra stuff is
@@ -209,5 +231,6 @@ public:
 	void SetNewState(EMonsterState NewState, APawn* PawnHunted);
 
 	void PrepareToSearch();
+	void FillNavPoints(FNavLocation& NewLocation);
 	void LookAround();
 };

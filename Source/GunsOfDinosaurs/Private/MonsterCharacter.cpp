@@ -20,11 +20,16 @@ AMonsterCharacter::AMonsterCharacter()
 
 	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 
+	LongRangeSight = 0.f;
+	LongRangeFieldOfView = 65.f;
+	HearingRange = 40000;
+	HearingRangeLineOfSight = 50000;
+
 	PawnSensingComponent->bOnlySensePlayers = true;
-	PawnSensingComponent->SightRadius = 1500;
-	PawnSensingComponent->SetPeripheralVisionAngle(65.f);
-	PawnSensingComponent->HearingThreshold = 40000;
-	PawnSensingComponent->LOSHearingThreshold = 50000;
+	PawnSensingComponent->SightRadius = LongRangeSight;
+	PawnSensingComponent->SetPeripheralVisionAngle(LongRangeFieldOfView);
+	PawnSensingComponent->HearingThreshold = HearingRange;
+	PawnSensingComponent->LOSHearingThreshold = HearingRangeLineOfSight;
 	FlickerRadius = 1500;
 
 	//PawnSensingComponent->SetSensingUpdatesEnabled(false);

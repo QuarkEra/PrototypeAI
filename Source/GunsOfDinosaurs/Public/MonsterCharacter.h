@@ -15,7 +15,15 @@ UCLASS()
 class GUNSOFDINOSAURS_API AMonsterCharacter : public ACharacter
 {
 	GENERATED_BODY()
-
+protected:
+	UPROPERTY(EditAnywhere, Category = MonsterAI)
+	float LongRangeSight;
+	UPROPERTY(EditAnywhere, Category = MonsterAI)
+	float LongRangeFieldOfView;
+	UPROPERTY(EditAnywhere, Category = MonsterAI)
+	float HearingRange;
+	UPROPERTY(EditAnywhere, Category = MonsterAI)
+	float HearingRangeLineOfSight;
 	
 public:
 	// Sets default values for this character's properties
@@ -30,7 +38,7 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere)
 	UPawnSensingComponent* PawnSensingComponent;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = MonsterAI)
 	double FlickerRadius;
 
 	UPROPERTY(EditDefaultsOnly, Category="Audio")

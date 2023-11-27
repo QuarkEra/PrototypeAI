@@ -11,6 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "Perception/PawnSensingComponent.h"
 
 
@@ -91,22 +92,59 @@ void AAI_MonsterController::BeginPlay()
 		{
 			SensingComponent->OnSeePawn.AddDynamic(this, &AAI_MonsterController::OnPawnSeen);
 			SensingComponent->OnHearNoise.AddDynamic(this, &AAI_MonsterController::OnNoiseHeard);
-
+			
 			MySightRadius = SensingComponent->SightRadius;
 		}
 	}
 
-	SensingComponent->SetSensingUpdatesEnabled(false);
-	MonsterCharacter->GetMesh()->SetVisibility(false);
-	MonsterCharacter->SetActorEnableCollision(false);
-	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//SensingComponent->SetSensingUpdatesEnabled(false);
+	//MonsterCharacter->GetMesh()->SetVisibility(false);
+	//MonsterCharacter->SetActorEnableCollision(false);
+	//MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	RoamTimer = 15.f;
-	PlayerSeenTimer = 4.5f;
-	MaxIdleTimer = 35.f;
-	PostHostilityTimer = 1.5f;
-	OutOfVentTimer = 15.f;
+	//RoamTimer = 15.f;
+	//PlayerSeenTimer = 4.5f;
+	//MaxIdleTimer = 35.f;
+	//PostHostilityTimer = 1.5f;
+	//OutOfVentTimer = 15.f;
 	
+}
+
+void AAI_MonsterController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
+{
+	Super::OnMoveCompleted(RequestID, Result);
+	
+	/////////////////////////////////////////////////////////////////////////////
+	// Use Switch case by state to decide what to do
+	/////////////////////////////////////////////////////////////////////////////
+	
+	if (Result.Code == EPathFollowingResult::Success)
+	{
+		// The AI character has reached the destination
+		UE_LOG(LogTemp, Warning, TEXT("AI character has reached the destination."));
+		if (bTravellingToPoint)
+		{
+			bTravellingToPoint = false;
+			GetWorld()->GetTimerManager().SetTimer(TH_FailedMovement, this, &AAI_MonsterController::GetNewAction, 5.f);
+		}
+		else
+		{
+			GetWorld()->GetTimerManager().SetTimer(TH_FailedMovement, this, &AAI_MonsterController::GetNewAction, 5.f);
+		}
+		
+	}
+	else
+	{
+		// The AI character failed to reach the destination
+		UE_LOG(LogTemp, Warning, TEXT("AI character failed to reach the destination."));
+		/*
+		if (CurrentState != EMonsterState::Wandering_Out_Of_Vent)
+		{
+			SetNewState(CurrentState, HuntedPawn);
+		}
+		*/
+		
+	}
 }
 
 void AAI_MonsterController::InitMonster()
@@ -117,9 +155,11 @@ void AAI_MonsterController::InitMonster()
 	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	TimePawnSeen = 0.f;
 	SearchAttempts = 0;
+	PlacesToSearch = 9;
 	MaxSearchAttempts = 2;
-	SetNewState(EMonsterState::Idle, nullptr);
+	//SetNewState(EMonsterState::Idle, nullptr);
 	HuntedPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+	SetNewState(EMonsterState::Wandering_Out_Of_Vent, HuntedPawn);
 }
 
 void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
@@ -128,9 +168,8 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 	bWantsToVent = false;
 	LastKnownPlayerLocation = PawnSeen->GetActorLocation();
 	
-	UE_LOG(LogTemp, Display, TEXT("%d Search Attempts"), SearchAttempts)
-
-	GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
+	// GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
+	
 	if (CurrentState != EMonsterState::Hostile)
 	{
 		HuntedPawn = PawnSeen;
@@ -147,7 +186,7 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 		
 		if (TimePawnSeen >= 0.25f)
 		{
-			GetWorldTimerManager().ClearTimer(Roam_TimerHandle);
+			// GetWorldTimerManager().ClearTimer(Roam_TimerHandle);
 			
 			// Increases Menace when Pawn is visible to monster
 			MyDirector->ChangeMenaceGauge(TimePawnSeen * 2);
@@ -170,8 +209,8 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 			if (SearchAttempts == 1)
 			{
 				MonsterCharacter->MonsterScream();
-				SetFocus(PawnSeen->GetOwner(), EAIFocusPriority::Gameplay);
-				GetWorld()->GetTimerManager().SetTimer(PlayerSeen_TimerHandle, this, &AAI_MonsterController::ReturnToVent,PlayerSeenTimer);
+				// SetFocus(PawnSeen->GetOwner(), EAIFocusPriority::Gameplay);
+				// GetWorld()->GetTimerManager().SetTimer(PlayerSeen_TimerHandle, this, &AAI_MonsterController::ReturnToVent,PlayerSeenTimer);
 			}
 		}
 	}
@@ -181,38 +220,42 @@ void AAI_MonsterController::OnNoiseHeard(APawn* HeardPawn, const FVector& NoiseL
  {
 	NoiseHeardLocation = NoiseLocation;
 
-	// Small MG increment for player making noise
-	MyDirector->ChangeMenaceGauge(20.f);
+	// Small MG increment for player making noise/distractions
+	MyDirector->ChangeMenaceGauge(10.f);
 	
 	if (HeardPawn != nullptr)
 	{
 		HuntedPawn = HeardPawn;
-		
-		if (CurrentState == EMonsterState::Idle)
+		SetNewState(EMonsterState::Hunting_Out_Of_Vent, HuntedPawn);
+
+		/*
+		if (bInVent)
 		{
 			bWantsToHunt = true;
-			NextState = EMonsterState::Hunting;
+			
+			NextState = EMonsterState::Hunting_In_Vent;
 			// SetWantsToVent(false);
 			AGodVent* NearestVent = GetNearestVentToHuntPlayerFrom(HeardPawn);
-			//FVector VentLocation = NearestVent->GetActorLocation();
+			// FVector VentLocation = NearestVent->GetActorLocation();
 			MonsterCharacter->SetActorEnableCollision(true);
 			SensingComponent->SetSensingUpdatesEnabled(false);
-			
+
 			if (MonsterCharacter->IsOverlappingActor(NearestVent))
 			{
 				ExitVent();
 			}
 			else
 			{
-				MonsterCharacter->MonsterScream();
 				MoveToActor(NearestVent);
 			}
+			
 		}
 		else
 		{
-			MonsterCharacter->MonsterScream();
-			HuntLocation(NoiseLocation);
+			SetNewState(EMonsterState::Hunting_Out_Of_Vent, HuntedPawn);
+			HuntLocation(NoiseHeardLocation);
 		}
+		*/
 	}
 }
 
@@ -283,12 +326,12 @@ void AAI_MonsterController::Roam()
 {	
 	const FNavLocation Location = HuntAroundPlayerLocation();
 	HuntLocation(Location);
-	GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
+	//GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
 }
 
 void AAI_MonsterController::ReturnToVent()
 {
-	MyDirector->GetNewAction();
+	//MyDirector->GetNewAction();
 	/*
 	if (SearchAttempts <= MaxSearchAttempts && bSeenPlayer)
 	{
@@ -442,6 +485,18 @@ void AAI_MonsterController::SetNewState(EMonsterState NewState, APawn* PawnHunte
 	case EMonsterState::Roaming:
 		Roam();
 		break;
+	case EMonsterState::Venting:
+		break;
+	case EMonsterState::Wandering_Out_Of_Vent:
+		GetNewAction();
+		break;
+	case EMonsterState::Wandering_In_Vent:
+		break;
+	case EMonsterState::Hunting_Out_Of_Vent:
+		StartHunting(PawnHunted);
+		break;
+	case EMonsterState::Hunting_In_Vent:
+		break;
 	default: break;
 	}
 }
@@ -482,24 +537,64 @@ void AAI_MonsterController::PrepareToSearch()
 	}
 }
 
+void AAI_MonsterController::FillNavPoints(FNavLocation& NewLocation)
+{
+	while (NavPoints.Num() < PlacesToSearch)
+	{
+		NavSys->GetRandomPoint(NewLocation);
+		NavPoints.Add(NewLocation);
+	}
+}
+
+void AAI_MonsterController::GetNewAction()
+{
+	MyDirector->GiveNewTask();
+}
+
+void AAI_MonsterController::GetNextNavPoint()
+{
+	if (NavPoints.Num() > 0 && NavPointIndex < NavPoints.Num())
+	{
+		NextPoint = NavPoints[NavPointIndex];
+
+		if (NavPointIndex > 1)
+		{
+			// set previous navigation point
+			LastPoint = NavPoints[NavPointIndex - 2];
+		}
+
+		if (NavPointIndex % 3 == 0 && NavPointIndex != 0)
+		{
+			// backtracking condition met get, last point for next
+			NextPoint = LastPoint;
+		}
+	}
+	if (NavPointIndex > NavPoints.Num())
+	{
+		NavPointIndex = 0;
+		NavPoints.Empty();
+		FillNavPoints(NextPoint);
+	}
+	NavPointIndex++;
+}
+
 void AAI_MonsterController::LookAround()
 {
 	if (NavSys)
 	{
-		float MG = MyDirector->CheckMenaceGauge();
-		UE_LOG(LogTemp, Display, TEXT("Looking Around, Menace Gauge: %f"), MG)
-		FNavLocation NewLocation;
-		NavSys->GetRandomPoint(NewLocation);
-		StartSearching(NewLocation);
+		bTravellingToPoint = true;
+		CharacterMovementComponent->MaxWalkSpeed = 200;
+		GetNextNavPoint();
+		StartSearching(NextPoint);
 	}
 }
 
 void AAI_MonsterController::StartSearching(FNavLocation LocationToSearch)
 {
 	UE_LOG(LogTemp, Display, TEXT("Starting Search"))
-	CharacterMovementComponent->MaxWalkSpeed = 200;
-	HuntLocation(LocationToSearch);
-	GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
+	MoveToLocation(LocationToSearch);
+	
+	// GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
 }
 
 void AAI_MonsterController::StartHunting(const APawn* PawnHunted)
@@ -515,15 +610,16 @@ void AAI_MonsterController::BecomeHostile(const APawn* PawnToAttack)
 	// 10 points per Hostile response
 	MyDirector->ChangeMenaceGauge(10.f);
 	
-	GetWorld()->GetTimerManager().ClearTimer(PlayerSeen_TimerHandle);
+	//GetWorld()->GetTimerManager().ClearTimer(PlayerSeen_TimerHandle);
 	UE_LOG(LogTemp, Display, TEXT("Becoming Hostile"))
 	CharacterMovementComponent->MaxWalkSpeed = 660;
 	bWantsToVent = false;
 	LastKnownPlayerLocation = PawnToAttack->GetOwner()->GetActorLocation();
-	MoveToActor(UGameplayStatics::GetPlayerCharacter(this, 0));
+	// MoveToActor(UGameplayStatics::GetPlayerCharacter(this, 0));
 	SetSeenPlayerLocation(PawnToAttack->GetActorLocation());
-	GetWorld()->GetTimerManager().ClearTimer(PostHostility_TimerHandle);
-	GetWorld()->GetTimerManager().SetTimer(PostHostility_TimerHandle, this, &AAI_MonsterController::StartRoamingFromHostile, PostHostilityTimer);
+	MoveToLocation(SeenPlayerLocation);
+	//GetWorld()->GetTimerManager().ClearTimer(PostHostility_TimerHandle);
+	//GetWorld()->GetTimerManager().SetTimer(PostHostility_TimerHandle, this, &AAI_MonsterController::StartRoamingFromHostile, PostHostilityTimer);
 }
 
 void AAI_MonsterController::StartEscaping()
@@ -534,7 +630,7 @@ void AAI_MonsterController::StartEscaping()
 void AAI_MonsterController::Escape()
 {
 	UE_LOG(LogTemp, Display, TEXT("Escaping"))
-	GetWorld()->GetTimerManager().ClearTimer(OutOfVent_TimerHandle);	// Stop ReturnToVent in ExitVent() 
+	//GetWorld()->GetTimerManager().ClearTimer(OutOfVent_TimerHandle);	// Stop ReturnToVent in ExitVent() 
 	CharacterMovementComponent->MaxWalkSpeed = 600;						// Gotta go fast
 	const AGodVent* VentToHideIn = GetNearestVentToHideIn();			// Hide faster
 	SetWantsToVent(true);												// Can enter vent when close
@@ -545,26 +641,28 @@ void AAI_MonsterController::Escape()
 
 void AAI_MonsterController::EnterVent()
 {
+	bInVent = true;
 	SetWantsToVent(false);
 	bSeenPlayer = false;
-	GetWorld()->GetTimerManager().ClearTimer(PlayerSeen_TimerHandle);
+	//GetWorld()->GetTimerManager().ClearTimer(PlayerSeen_TimerHandle);
 	MonsterCharacter->GetMesh()->SetVisibility(false);
 	MonsterCharacter->SetActorEnableCollision(false);
 	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	CharacterMovementComponent->StopActiveMovement();
 	SensingComponent->SetSensingUpdatesEnabled(true);
 	SensingComponent->SightRadius = 0;
-	GetWorld()->GetTimerManager().SetTimer(MaxIdle_TimerHandle, this, &AAI_MonsterController::PrepareToSearch, MaxIdleTimer);
+	//GetWorld()->GetTimerManager().SetTimer(MaxIdle_TimerHandle, this, &AAI_MonsterController::PrepareToSearch, MaxIdleTimer);
 }
 
 void AAI_MonsterController::ExitVent()
 {
+	bInVent = false;
 	SetWantsToVent(false);
 	MonsterCharacter->GetMesh()->SetVisibility(true);
 	MonsterCharacter->SetActorEnableCollision(true);
 	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SensingComponent->SetSensingUpdatesEnabled(true);
-	SensingComponent->SightRadius = 1500;
-	GetWorld()->GetTimerManager().SetTimer(OutOfVent_TimerHandle, this, &AAI_MonsterController::ReturnToVent,OutOfVentTimer);
+	SensingComponent->SightRadius = MySightRadius;
+	//GetWorld()->GetTimerManager().SetTimer(OutOfVent_TimerHandle, this, &AAI_MonsterController::ReturnToVent,OutOfVentTimer);
 	SetNewState(NextState, GetHuntedPawn());
 }
