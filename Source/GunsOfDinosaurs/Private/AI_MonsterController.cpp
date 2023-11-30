@@ -602,7 +602,7 @@ void AAI_MonsterController::StartHunting(const APawn* PawnHunted)
 	UE_LOG(LogTemp, Display, TEXT("Starting Hunt"))
 	MonsterCharacter->MonsterScream();
 	CharacterMovementComponent->MaxWalkSpeed = 450;
-	HuntLocation(NoiseHeardLocation);
+	MoveToLocation(NoiseHeardLocation);
 }
 
 void AAI_MonsterController::BecomeHostile(const APawn* PawnToAttack)

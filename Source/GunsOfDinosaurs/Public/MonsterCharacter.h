@@ -46,7 +46,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Audio")
 	USoundCue* HostileScream;
 	
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TArray<AActor*> FoundFlickeringLights;
 
 	// Any Damage is good enough for now

@@ -20,7 +20,7 @@ AMonsterCharacter::AMonsterCharacter()
 
 	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 
-	LongRangeSight = 0.f;
+	LongRangeSight = 1250.f;
 	LongRangeFieldOfView = 65.f;
 	HearingRange = 40000;
 	HearingRangeLineOfSight = 50000;
