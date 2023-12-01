@@ -8,6 +8,7 @@
 
 class ADirector;
 class AGodVent;
+class AGodCharacter;
 class UNavigationSystemV1;
 class AMonsterCharacter;
 class UCharacterMovementComponent;
@@ -198,6 +199,8 @@ protected:
 	
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 	FTimerHandle TH_FailedMovement;
+
+	AGodCharacter* GodPlayer;
 
 public:
 	// I trust Rider with whatever this extra stuff is

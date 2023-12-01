@@ -8,7 +8,8 @@
 #include "Engine/DamageEvents.h"
 #include "GunsOfDinosaurs/GunsOfDinosaurs.h"
 #include "Kismet/GameplayStatics.h"
-#include <AI_MonsterController.h>
+
+#include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 AGodWeapon::AGodWeapon()
@@ -22,6 +23,16 @@ AGodWeapon::AGodWeapon()
 	// primary ammo is default
 	CurrentAmmoType = EAmmoType::Primary;
 	bHasAmmo = true;
+
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Comp"));
+	RootComponent = SceneComponent;
+	
+	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Skeletal Mesh"));
+	SkeletalMesh->SetupAttachment(RootComponent);
+	
+	MuzzleParticleEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Muzzle Particle Effect"));
+	MuzzleParticleEffect->SetupAttachment(SkeletalMesh);
+	
 	
 }
 
@@ -142,31 +153,55 @@ void AGodWeapon::Shoot()
 
 		if (HitCharacter != nullptr)
 		{
-			
-			
-			FVector CameraForwardVector;
-			
-			if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
-			{
-				CameraForwardVector = PC->GetControlRotation().Vector();
-			}
-
 			APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
 			if (PlayerPawn != nullptr)
 			{
-				UE_LOG(LogTemp, Display, TEXT("Damage applied next"))
-				UGameplayStatics::ApplyPointDamage(HitCharacter, 1, CameraForwardVector, Hit, PlayerPawn->GetInstigatorController(), this, DamageType);
+				//UGameplayStatics::ApplyPointDamage(HitCharacter, 1, CameraForwardVector, Hit, PlayerPawn->GetInstigatorController(), this, DamageType);
 				UGameplayStatics::ApplyDamage(HitCharacter, 2, PlayerPawn->GetInstigatorController(), this, DamageType);
 			}
+		}
+	}
 
-			
+	if (bFlame)
+	{
+		FHitResult Hit;
+		DoHitScan(Hit);
+
+		if (MuzzleParticleEffect)
+		{
+			MuzzleParticleEffect->ActivateSystem(true);
+		}
+		
+		const FDamageEvent DamageEvent;
+		AActor* HitCharacter = Hit.GetActor();
+
+		if (HitCharacter != nullptr)
+		{
+			APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+			if (PlayerPawn != nullptr)
+			{
+				//UGameplayStatics::ApplyPointDamage(HitCharacter, 1, CameraForwardVector, Hit, PlayerPawn->GetInstigatorController(), this, DamageType);
+				UGameplayStatics::ApplyDamage(HitCharacter, 2, PlayerPawn->GetInstigatorController(), this, DamageType);
+			}
 		}
 	}
 
 	// audio components activated
 	SoundSelectionByAmmoType(Character);
+}
 
-	return;
+void AGodWeapon::StopShoot()
+{
+	if (bFlame)
+	{
+		if (MuzzleParticleEffect)
+		{
+			// This was the old way i guess
+			//MuzzleParticleEffect->ActivateSystem(false);
+			// new hotness i suppose
+			MuzzleParticleEffect->DeactivateSystem();
+		}
+	}
 }
 
 void AGodWeapon::CycleAmmoType()

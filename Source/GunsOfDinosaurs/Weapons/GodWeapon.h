@@ -9,13 +9,14 @@
 
 class UGodInventoryComponent;
 
+// this is also used for selecting ammo class 
 UENUM(BlueprintType)
 enum class EWeaponClass : uint8
 {
 	Melee,
 	Pistol,
-	Shotgun,
 	Flame,
+	Shotgun,
 	Bow,
 };
 
@@ -37,33 +38,44 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsActiveWeapon;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Gameplay")
 	bool bIsCollected;
+	
 	bool bHasAmmo;
 	[[nodiscard]] bool IsHasAmmo() const;
 	__declspec(property(get = IsHasAmmo)) bool FHasAmmo;
 
-	UPROPERTY(BlueprintReadWrite, Category=Weapon)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	EWeaponClass WeaponClass;
 	
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	void Shoot();
+	void StopShoot();
 	void CycleAmmoType();
 
-	UPROPERTY(EditAnywhere, Category=Gameplay)
+	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
 	USoundBase* ShootSound;
-	UPROPERTY(EditAnywhere, Category=Gameplay)
+	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
 	USoundBase* SecondaryAmmoShootSound;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
 	bool bIsHitScanWeapon = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
 	FName MuzzleName;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
 	UParticleSystem* ImpactFleshEffect;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
 	UParticleSystem* ImpactDefaultEffect;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
 	UParticleSystem* ImpactSecondaryAmmoEffect;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
+	bool bFlame = false;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
+	USceneComponent* SceneComponent;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
+	USkeletalMeshComponent* SkeletalMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
+	UParticleSystemComponent* MuzzleParticleEffect;
 
 protected:
 	// Called when the game starts or when spawned

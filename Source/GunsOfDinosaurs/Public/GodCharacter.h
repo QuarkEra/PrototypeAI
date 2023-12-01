@@ -48,6 +48,7 @@ protected:
 	void Look(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
 	void ShootWeapon();
+	void StopShootWeapon();
 	void CycleAmmoType();
 
 
@@ -59,7 +60,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; };
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	AGodWeapon* CurrentWeapon;
 
 };

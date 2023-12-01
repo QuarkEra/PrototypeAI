@@ -91,6 +91,14 @@ void AGodCharacter::ShootWeapon()
 	}
 }
 
+void AGodCharacter::StopShootWeapon()
+{
+	if (CurrentWeapon != nullptr)
+	{
+		CurrentWeapon->StopShoot();
+	}
+}
+
 void AGodCharacter::CycleAmmoType()
 {
 	if (CurrentWeapon != nullptr)
@@ -127,12 +135,14 @@ void AGodCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 					{
 						Input->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AGodCharacter::Move);
 						Input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &AGodCharacter::Look);
-						Input->BindAction(IA_ShootWeapon, ETriggerEvent::Triggered, this, &AGodCharacter::ShootWeapon);
+						Input->BindAction(IA_ShootWeapon, ETriggerEvent::Started, this, &AGodCharacter::ShootWeapon);
 						Input->BindAction(IA_CycleAmmoType, ETriggerEvent::Triggered, this, &AGodCharacter::CycleAmmoType);
+						Input->BindAction(IA_ShootWeapon, ETriggerEvent::Completed, this, &AGodCharacter::StopShootWeapon);
 					}
 				}
 			}
 		}
 	}
 }
+
 

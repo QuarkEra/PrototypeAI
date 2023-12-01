@@ -4,6 +4,7 @@
 #include "AI_MonsterController.h"
 
 #include "GodVent.h"
+#include "GodCharacter.h"
 #include "Director.h"
 #include "MonsterCharacter.h"
 #include "NavigationSystem.h"
@@ -13,6 +14,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Perception/PawnSensingComponent.h"
+#include <GunsOfDinosaurs/Weapons/GodWeapon.h>
 
 
 void AAI_MonsterController::ReceiveNewDirector(ADirector* NewDirector)
@@ -200,6 +202,20 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 			if (PawnSeen != nullptr && bIsHostile)
 			{
 				SetNewState(EMonsterState::Hostile, PawnSeen);
+			}
+		}
+		else if (CurrentState == EMonsterState::Hostile)
+		{
+			GodPlayer = Cast<AGodCharacter>(PawnSeen);
+
+			if (GodPlayer != nullptr)
+			{
+				//EWeaponClass WeaponClass = GodPlayer->GetWeaponClass();
+				if (GodPlayer->CurrentWeapon->bFlame)
+				{
+					StopMovement();
+					MonsterCharacter->MonsterScream();
+				}
 			}
 		}
 		else
