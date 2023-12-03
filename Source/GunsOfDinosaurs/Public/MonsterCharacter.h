@@ -34,8 +34,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-protected:
+	
 	UPROPERTY(EditAnywhere)
 	UPawnSensingComponent* PawnSensingComponent;
 	UPROPERTY(EditAnywhere, Category = MonsterAI)

@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "GodWeapon.generated.h"
 
+class UPointLightComponent;
 class UGodInventoryComponent;
 
 // this is also used for selecting ammo class 
@@ -39,11 +40,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	bool bIsActiveWeapon;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Gameplay")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Gameplay")
 	bool bIsCollected;
 	
 	bool bHasAmmo;
 	[[nodiscard]] bool IsHasAmmo() const;
+	void CauseDamageToValidActor(AActor* HitCharacter);
 	__declspec(property(get = IsHasAmmo)) bool FHasAmmo;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
@@ -51,7 +53,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	void Shoot();
+	UFUNCTION(BlueprintCallable, Category="Weapon")
 	void StopShoot();
+	
 	void CycleAmmoType();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
@@ -76,7 +80,9 @@ public:
 	USkeletalMeshComponent* SkeletalMesh;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
 	UParticleSystemComponent* MuzzleParticleEffect;
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Gameplay")
+	UPointLightComponent* PointLightComponent;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

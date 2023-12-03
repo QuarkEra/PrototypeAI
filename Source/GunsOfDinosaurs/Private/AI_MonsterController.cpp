@@ -188,6 +188,19 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 		
 		if (TimePawnSeen >= 0.25f)
 		{
+			// This more or less successfully pauses monster movement if flame weaponry is equipped
+			GodPlayer = Cast<AGodCharacter>(PawnSeen);
+
+			if (GodPlayer != nullptr)
+			{
+				//EWeaponClass WeaponClass = GodPlayer->GetWeaponClass();
+				if (GodPlayer->CurrentWeapon->bFlame)
+				{
+					StopMovement();
+					return;
+				}
+			}
+			
 			// GetWorldTimerManager().ClearTimer(Roam_TimerHandle);
 			
 			// Increases Menace when Pawn is visible to monster
@@ -221,7 +234,8 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 		else
 		{
 			StopMovement();
-			
+
+			// Not used right now
 			if (SearchAttempts == 1)
 			{
 				MonsterCharacter->MonsterScream();

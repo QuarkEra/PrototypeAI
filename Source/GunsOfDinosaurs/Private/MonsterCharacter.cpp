@@ -5,6 +5,7 @@
 
 #include "AI_MonsterController.h"
 #include "FlickeringLight.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Perception/PawnSensingComponent.h"
@@ -17,7 +18,7 @@ AMonsterCharacter::AMonsterCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	
 	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 
 	LongRangeSight = 1250.f;
