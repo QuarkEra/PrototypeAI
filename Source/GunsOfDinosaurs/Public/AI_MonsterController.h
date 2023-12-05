@@ -200,7 +200,10 @@ protected:
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 	FTimerHandle TH_FailedMovement;
 
+	UPROPERTY()
 	AGodCharacter* GodPlayer;
+	
+	float DotProductToOtherActor(AActor* OtherActor);
 
 public:
 	// I trust Rider with whatever this extra stuff is
@@ -228,6 +231,10 @@ public:
 	// @TODO: DisableMonster()
 	void EnterVent();
 	void ExitVent();
+
+	// NextState is set by monster and can be triggered as new/current
+	// when vent is finally reached
+	void SetNextState();
 	// @TODO: did not know timer can be set with function params
 	void StartEscaping();
 	void Escape();

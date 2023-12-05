@@ -61,7 +61,7 @@ public:
 
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; };
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Weapon")
 	AGodWeapon* CurrentWeapon;
 
 };

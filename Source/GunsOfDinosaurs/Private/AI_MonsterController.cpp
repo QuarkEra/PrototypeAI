@@ -16,6 +16,8 @@
 #include "Perception/PawnSensingComponent.h"
 #include <GunsOfDinosaurs/Weapons/GodWeapon.h>
 
+#include "InterchangeResult.h"
+
 
 void AAI_MonsterController::ReceiveNewDirector(ADirector* NewDirector)
 {
@@ -109,7 +111,8 @@ void AAI_MonsterController::BeginPlay()
 	//MaxIdleTimer = 35.f;
 	//PostHostilityTimer = 1.5f;
 	//OutOfVentTimer = 15.f;
-	
+
+	PlacesToSearch = 5;
 }
 
 void AAI_MonsterController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
@@ -128,10 +131,12 @@ void AAI_MonsterController::OnMoveCompleted(FAIRequestID RequestID, const FPathF
 		{
 			bTravellingToPoint = false;
 			GetWorld()->GetTimerManager().SetTimer(TH_FailedMovement, this, &AAI_MonsterController::GetNewAction, 5.f);
+			UE_LOG(LogTemp, Warning, TEXT("New Task requested from Director"));
 		}
 		else
 		{
 			GetWorld()->GetTimerManager().SetTimer(TH_FailedMovement, this, &AAI_MonsterController::GetNewAction, 5.f);
+			UE_LOG(LogTemp, Warning, TEXT("New Task requested from Director"));
 		}
 		
 	}
@@ -145,6 +150,12 @@ void AAI_MonsterController::OnMoveCompleted(FAIRequestID RequestID, const FPathF
 			SetNewState(CurrentState, HuntedPawn);
 		}
 		*/
+		if (bTravellingToPoint)
+		{
+			bTravellingToPoint = false;
+			GetWorld()->GetTimerManager().SetTimer(TH_FailedMovement, this, &AAI_MonsterController::GetNewAction, 5.f);
+			UE_LOG(LogTemp, Warning, TEXT("New Task requested from Director"));
+		}
 		
 	}
 }
@@ -171,6 +182,34 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 	LastKnownPlayerLocation = PawnSeen->GetActorLocation();
 	
 	// GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
+	if (bIsHostile)
+	{
+		MoveToActor(PawnSeen);
+		GodPlayer = Cast<AGodCharacter>(PawnSeen);
+		if (GodPlayer != nullptr)
+		{
+			const AGodWeapon* PlayerWeapon = GodPlayer->CurrentWeapon;
+			if (PlayerWeapon != nullptr)// currently you can have "no" weapon
+										//another issue of not designing before starting
+			{
+				if (PlayerWeapon->bFlame)
+				{
+					// no point stopping if the weapon is not facing you
+					// so check Dot now
+					const float DotProduct = DotProductToOtherActor(GodPlayer); 
+					if (DotProduct < 0)
+					{
+						if (SensingComponent->HasLineOfSightTo(GodPlayer))
+						{
+							StopMovement();
+						}
+					}
+				}
+			}
+		}
+	}
+	// This more or less successfully pauses monster movement if flame weaponry is equipped
+
 	
 	if (CurrentState != EMonsterState::Hostile)
 	{
@@ -188,47 +227,22 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 		
 		if (TimePawnSeen >= 0.25f)
 		{
-			// This more or less successfully pauses monster movement if flame weaponry is equipped
-			GodPlayer = Cast<AGodCharacter>(PawnSeen);
-
-			if (GodPlayer != nullptr)
-			{
-				//EWeaponClass WeaponClass = GodPlayer->GetWeaponClass();
-				if (GodPlayer->CurrentWeapon->bFlame)
-				{
-					StopMovement();
-					return;
-				}
-			}
-			
-			// GetWorldTimerManager().ClearTimer(Roam_TimerHandle);
-			
-			// Increases Menace when Pawn is visible to monster
 			MyDirector->ChangeMenaceGauge(TimePawnSeen * 2);
 			float MG = MyDirector->CheckMenaceGauge();
 			UE_LOG(LogTemp, Display, TEXT("Looking Around, Menace Gauge: %f"), MG)
 			
+			// GetWorldTimerManager().ClearTimer(Roam_TimerHandle);
+			
 			bIsHostile = true;
 			SearchAttempts = 0;
-			MonsterCharacter->MonsterHostileScream();
+			if (CurrentState != EMonsterState::Hostile)
+			{
+				MonsterCharacter->MonsterHostileScream();
+			}
 			
 			if (PawnSeen != nullptr && bIsHostile)
 			{
 				SetNewState(EMonsterState::Hostile, PawnSeen);
-			}
-		}
-		else if (CurrentState == EMonsterState::Hostile)
-		{
-			GodPlayer = Cast<AGodCharacter>(PawnSeen);
-
-			if (GodPlayer != nullptr)
-			{
-				//EWeaponClass WeaponClass = GodPlayer->GetWeaponClass();
-				if (GodPlayer->CurrentWeapon->bFlame)
-				{
-					StopMovement();
-					MonsterCharacter->MonsterScream();
-				}
 			}
 		}
 		else
@@ -255,19 +269,16 @@ void AAI_MonsterController::OnNoiseHeard(APawn* HeardPawn, const FVector& NoiseL
 	
 	if (HeardPawn != nullptr)
 	{
-		HuntedPawn = HeardPawn;
-		SetNewState(EMonsterState::Hunting_Out_Of_Vent, HuntedPawn);
-
-		/*
+		//HuntedPawn = HeardPawn;
 		if (bInVent)
 		{
-			bWantsToHunt = true;
-			
-			NextState = EMonsterState::Hunting_In_Vent;
+			CurrentState = EMonsterState::Hunting_In_Vent;
+			NextState = EMonsterState::Hunting_Out_Of_Vent;
 			// SetWantsToVent(false);
-			AGodVent* NearestVent = GetNearestVentToHuntPlayerFrom(HeardPawn);
+			AGodVent* NearestVent = GetNearestVentToHuntFrom(NoiseLocation);
 			// FVector VentLocation = NearestVent->GetActorLocation();
-			MonsterCharacter->SetActorEnableCollision(true);
+			//MonsterCharacter->SetActorEnableCollision(true);
+			bWantsToHunt = true;
 			SensingComponent->SetSensingUpdatesEnabled(false);
 
 			if (MonsterCharacter->IsOverlappingActor(NearestVent))
@@ -278,14 +289,13 @@ void AAI_MonsterController::OnNoiseHeard(APawn* HeardPawn, const FVector& NoiseL
 			{
 				MoveToActor(NearestVent);
 			}
-			
 		}
 		else
 		{
-			SetNewState(EMonsterState::Hunting_Out_Of_Vent, HuntedPawn);
+			SetNewState(EMonsterState::Hunting_Out_Of_Vent, nullptr);
 			HuntLocation(NoiseHeardLocation);
 		}
-		*/
+		
 	}
 }
 
@@ -341,6 +351,7 @@ FNavLocation AAI_MonsterController::HuntAroundPlayerLocation()
 	return {};
 }
 
+// wanted to make it clearer why monster would move to a location
 void AAI_MonsterController::HuntLocation(FVector HuntCoords)
 {
 	MoveToLocation(HuntCoords, 25.f, true, true, false, true);
@@ -487,14 +498,27 @@ void AAI_MonsterController::MoveToRandomVent()
 	}
 }
 
+float AAI_MonsterController::DotProductToOtherActor(AActor* OtherActor)
+{
+	if (OtherActor)
+	{
+		const FVector OtherActorVector = OtherActor->GetActorForwardVector();
+		FVector Offset = OtherActor->GetActorLocation() - MonsterCharacter->GetActorLocation();
+		Offset = Offset.GetSafeNormal();
+		return FVector::DotProduct(OtherActorVector, Offset);
+	}
+	return -2.0;
+}
+
 EMonsterState AAI_MonsterController::GetCurrentState() const
 {
 	return CurrentState;
 }
 
 void AAI_MonsterController::SetNewState(EMonsterState NewState, APawn* PawnHunted)
-{
+ {
 	CurrentState = NewState;
+	UE_LOG(LogTemp, Display, TEXT("Changing State %hhd"), NewState)
 	switch (NewState)
 	{
 	case EMonsterState::Idle:
@@ -632,7 +656,7 @@ void AAI_MonsterController::StartHunting(const APawn* PawnHunted)
 	UE_LOG(LogTemp, Display, TEXT("Starting Hunt"))
 	MonsterCharacter->MonsterScream();
 	CharacterMovementComponent->MaxWalkSpeed = 450;
-	MoveToLocation(NoiseHeardLocation);
+	MoveToLocation(NoiseHeardLocation, 0.f);
 }
 
 void AAI_MonsterController::BecomeHostile(const APawn* PawnToAttack)
@@ -660,7 +684,7 @@ void AAI_MonsterController::StartEscaping()
 void AAI_MonsterController::Escape()
 {
 	UE_LOG(LogTemp, Display, TEXT("Escaping"))
-	//GetWorld()->GetTimerManager().ClearTimer(OutOfVent_TimerHandle);	// Stop ReturnToVent in ExitVent() 
+	//GetWorld()->GetTimerManager().ClearTimer(OutOfVent_TimerHandle);	// Stop ReturnToVent  happening in ExitVent() 
 	CharacterMovementComponent->MaxWalkSpeed = 600;						// Gotta go fast
 	const AGodVent* VentToHideIn = GetNearestVentToHideIn();			// Hide faster
 	SetWantsToVent(true);												// Can enter vent when close
@@ -694,5 +718,12 @@ void AAI_MonsterController::ExitVent()
 	SensingComponent->SetSensingUpdatesEnabled(true);
 	SensingComponent->SightRadius = MySightRadius;
 	//GetWorld()->GetTimerManager().SetTimer(OutOfVent_TimerHandle, this, &AAI_MonsterController::ReturnToVent,OutOfVentTimer);
-	SetNewState(NextState, GetHuntedPawn());
+
+	// Currently Vent calls SetNextState on overlap beginning
+	// SetNewState(NextState, GetHuntedPawn());
+}
+
+void AAI_MonsterController::SetNextState()
+{
+	SetNewState(NextState, nullptr);
 }

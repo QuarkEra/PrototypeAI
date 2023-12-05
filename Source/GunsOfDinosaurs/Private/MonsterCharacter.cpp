@@ -5,7 +5,6 @@
 
 #include "AI_MonsterController.h"
 #include "FlickeringLight.h"
-#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Perception/PawnSensingComponent.h"
@@ -102,7 +101,6 @@ void AMonsterCharacter::Tick(float DeltaTime)
 			}
 		}
 	}
-	
 	//DrawDebugSphere(GetWorld(), GetActorLocation(), 32.f, 12, FColor::White, false, 0, 0, 1);
 }
 
