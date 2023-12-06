@@ -32,5 +32,4 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddAmmo(EWeaponClass WeaponClass, int AmmoCount, EAmmoType AmmoType);
 	void UseAmmo(EWeaponClass WeaponClass, EAmmoType AmmoType);
-	
 };

@@ -181,9 +181,22 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 	bWantsToVent = false;
 	LastKnownPlayerLocation = PawnSeen->GetActorLocation();
 	
+	if (MonsterCharacter->GetDistanceTo(PawnSeen) < 150.f)
+	{
+		if (!PlayerCaught)
+		{
+			// do once
+			PlayerCaught = !PlayerCaught;
+			KillPlayer();
+		}
+	}
+
 	// GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
 	if (bIsHostile)
 	{
+		// Speed is greatly reduced if player switches to non-flame weapon
+		CharacterMovementComponent->MaxWalkSpeed = 660;
+
 		MoveToActor(PawnSeen);
 		GodPlayer = Cast<AGodCharacter>(PawnSeen);
 		if (GodPlayer != nullptr)
@@ -349,6 +362,19 @@ FNavLocation AAI_MonsterController::HuntAroundPlayerLocation()
 		}
 	}
 	return {};
+}
+
+void AAI_MonsterController::KillPlayer()
+{
+	GetWorldTimerManager().SetTimer(TH_ShortDelay_TimerHandle, this, &AAI_MonsterController::RestartLevel, 3.0f);
+	MonsterCharacter->MonsterHostileScream();
+	GodPlayer->CharacterCaught(MonsterCharacter->GetActorLocation());
+}
+
+void AAI_MonsterController::RestartLevel()
+{
+	FString ThisLevel = UGameplayStatics::GetCurrentLevelName(GetWorld());
+	UGameplayStatics::OpenLevel(GetWorld(), (*ThisLevel));
 }
 
 // wanted to make it clearer why monster would move to a location
@@ -683,6 +709,7 @@ void AAI_MonsterController::StartEscaping()
 
 void AAI_MonsterController::Escape()
 {
+	bIsHostile = false;
 	UE_LOG(LogTemp, Display, TEXT("Escaping"))
 	//GetWorld()->GetTimerManager().ClearTimer(OutOfVent_TimerHandle);	// Stop ReturnToVent  happening in ExitVent() 
 	CharacterMovementComponent->MaxWalkSpeed = 600;						// Gotta go fast
@@ -690,7 +717,7 @@ void AAI_MonsterController::Escape()
 	SetWantsToVent(true);												// Can enter vent when close
 	SetWantsToHunt(false);												// Will not ExitVent() on overlap
 	SensingComponent->SetSensingUpdatesEnabled(false);					// Do not muck around just run away
-	MoveToLocation(VentToHideIn->GetActorLocation());				// Go
+	MoveToLocation(VentToHideIn->GetActorLocation());					// Go
 }
 
 void AAI_MonsterController::EnterVent()

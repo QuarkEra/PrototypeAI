@@ -9,6 +9,7 @@
 #include "Camera/CameraComponent.h"
 #include "GunsOfDinosaurs/Weapons/GodWeapon.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AGodCharacter::AGodCharacter()
@@ -143,6 +144,11 @@ void AGodCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 			}
 		}
 	}
+}
+
+void AGodCharacter::CharacterCaught(const FVector& CatcherLocation)
+{
+	DisableInput(Cast<APlayerController>(GetController()));
 }
 
 

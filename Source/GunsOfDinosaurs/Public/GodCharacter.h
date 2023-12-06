@@ -64,4 +64,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Weapon")
 	AGodWeapon* CurrentWeapon;
 
+	void CharacterCaught(const FVector& CatcherLocation);
+
 };

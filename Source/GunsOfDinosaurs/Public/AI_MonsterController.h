@@ -145,6 +145,10 @@ protected:
 	AGodVent* GetNearestVentToHideIn();
 	FNavLocation HuntAroundPlayerLocation();
 
+	void KillPlayer();
+	bool PlayerCaught;
+	FTimerHandle TH_ShortDelay_TimerHandle;
+	void RestartLevel();
 
 	/*
 	* MonsterAI stuff that can remain post refactor
