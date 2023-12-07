@@ -177,10 +177,13 @@ void AAI_MonsterController::InitMonster()
 
 void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 {
-	bSeenPlayer = true;
-	bWantsToVent = false;
-	LastKnownPlayerLocation = PawnSeen->GetActorLocation();
 	
+	bWantsToVent = false;
+	LastKnownPlayerLocation = SeenPlayerLocation = PawnSeen->GetActorLocation();
+
+	// get last player location a second after running around a corner?
+	
+	// kill player when close enough
 	if (MonsterCharacter->GetDistanceTo(PawnSeen) < 100.f)
 	{
 		if (!PlayerCaught)
@@ -190,8 +193,8 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 			KillPlayer();
 		}
 	}
-
-	// GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
+	
+	// This more or less successfully pauses monster movement if flame weaponry is equipped
 	if (bIsHostile)
 	{
 		// Speed is greatly reduced if player switches to non-flame weapon
@@ -202,13 +205,11 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 		if (GodPlayer != nullptr)
 		{
 			const AGodWeapon* PlayerWeapon = GodPlayer->CurrentWeapon;
-			if (PlayerWeapon != nullptr)// currently you can have "no" weapon
-										//another issue of not designing before starting
+			if (PlayerWeapon != nullptr)// currently you can have "no" weapon another issue of not designing before starting
 			{
 				if (PlayerWeapon->bFlame)
 				{
-					// no point stopping if the weapon is not facing you
-					// so check Dot now
+					// no point stopping if the weapon is not facing you so check Dot now
 					const float DotProduct = DotProductToOtherActor(GodPlayer); 
 					if (DotProduct < 0)
 					{
@@ -221,8 +222,6 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 			}
 		}
 	}
-	// This more or less successfully pauses monster movement if flame weaponry is equipped
-
 	
 	if (CurrentState != EMonsterState::Hostile)
 	{
@@ -232,7 +231,7 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 		const FVector MonsterLocation = MonsterCharacter->GetActorLocation();
 		const double VectorDistance = UKismetMathLibrary::Vector_Distance2D(PawnLocation, MonsterLocation);
 
-		SightDistanceMultiplier = FMath::GetMappedRangeValueClamped(FVector2d(MySightRadius, 0), FVector2d(1, 6), VectorDistance);
+		SightDistanceMultiplier = FMath::GetMappedRangeValueClamped(FVector2d(MySightRadius, 0), FVector2d(2, 6), VectorDistance);
 		SightDistanceMultiplier = FMath::Clamp(SightDistanceMultiplier, 0, MySightRadius);
 		TimePawnSeen += (UGameplayStatics::GetWorldDeltaSeconds(GetWorld()) * SightDistanceMultiplier);
 		
@@ -241,10 +240,6 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 		if (TimePawnSeen >= 0.25f)
 		{
 			MyDirector->ChangeMenaceGauge(TimePawnSeen * 2);
-			float MG = MyDirector->CheckMenaceGauge();
-			UE_LOG(LogTemp, Display, TEXT("Looking Around, Menace Gauge: %f"), MG)
-			
-			// GetWorldTimerManager().ClearTimer(Roam_TimerHandle);
 			
 			bIsHostile = true;
 			SearchAttempts = 0;
@@ -261,14 +256,6 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 		else
 		{
 			StopMovement();
-
-			// Not used right now
-			if (SearchAttempts == 1)
-			{
-				MonsterCharacter->MonsterScream();
-				// SetFocus(PawnSeen->GetOwner(), EAIFocusPriority::Gameplay);
-				// GetWorld()->GetTimerManager().SetTimer(PlayerSeen_TimerHandle, this, &AAI_MonsterController::ReturnToVent,PlayerSeenTimer);
-			}
 		}
 	}
 }
@@ -544,6 +531,7 @@ EMonsterState AAI_MonsterController::GetCurrentState() const
 void AAI_MonsterController::SetNewState(EMonsterState NewState, APawn* PawnHunted)
  {
 	CurrentState = NewState;
+	bTravellingToPoint = false;
 	UE_LOG(LogTemp, Display, TEXT("Changing State %hhd"), NewState)
 	switch (NewState)
 	{
@@ -551,6 +539,7 @@ void AAI_MonsterController::SetNewState(EMonsterState NewState, APawn* PawnHunte
 		StartIdle();
 		break;
 	case EMonsterState::Searching:
+		bTravellingToPoint = true;
 		LookAround();
 		break;
 	case EMonsterState::Hunting:
@@ -662,7 +651,6 @@ void AAI_MonsterController::LookAround()
 {
 	if (NavSys)
 	{
-		bTravellingToPoint = true;
 		CharacterMovementComponent->MaxWalkSpeed = 200;
 		GetNextNavPoint();
 		StartSearching(NextPoint);
@@ -695,11 +683,8 @@ void AAI_MonsterController::BecomeHostile(const APawn* PawnToAttack)
 	CharacterMovementComponent->MaxWalkSpeed = 660;
 	bWantsToVent = false;
 	LastKnownPlayerLocation = PawnToAttack->GetOwner()->GetActorLocation();
-	// MoveToActor(UGameplayStatics::GetPlayerCharacter(this, 0));
 	SetSeenPlayerLocation(PawnToAttack->GetActorLocation());
 	MoveToLocation(SeenPlayerLocation);
-	//GetWorld()->GetTimerManager().ClearTimer(PostHostility_TimerHandle);
-	//GetWorld()->GetTimerManager().SetTimer(PostHostility_TimerHandle, this, &AAI_MonsterController::StartRoamingFromHostile, PostHostilityTimer);
 }
 
 void AAI_MonsterController::StartEscaping()

@@ -3,13 +3,16 @@
 
 #include "GodCharacter.h"
 
+#include "Director.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GunsOfDinosaurs/Weapons/GodWeapon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Perception/PawnSensingComponent.h"
 
 // Sets default values
 AGodCharacter::AGodCharacter()
@@ -21,8 +24,26 @@ AGodCharacter::AGodCharacter()
 	CameraComp->SetupAttachment(RootComponent);
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
 	Mesh1P->SetupAttachment(CameraComp);
+	SensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("LineOfSightChecker"));
+	
+	if (SensingComponent)
+	{
+		SensingComponent->SetPeripheralVisionAngle(25);
+	}
+	
+	LOSToMonsterMgMultiplier = 0.1;
+	DistToMonsterMgMultiplier = 1;
+	
 	SetInstigator(this);
+	
+}
 
+void AGodCharacter::ReceiveNewDirector(ADirector* NewDirector)
+{
+	if (ensure(NewDirector != nullptr))
+	{
+		this->MyDirector = NewDirector;
+	}
 }
 
 
@@ -30,6 +51,8 @@ AGodCharacter::AGodCharacter()
 void AGodCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	MonsterActor = MyDirector->GiveMonsterActor();
 	
 }
 
@@ -125,7 +148,7 @@ void AGodCharacter::Tick(float DeltaTime)
 					PC->GetControlRotation(),
 					NewRot,
 					UGameplayStatics::GetWorldDeltaSeconds(GetWorld()),
-					5));
+					10));
 		}
 		if (CameraComp)
 		{
@@ -138,7 +161,28 @@ void AGodCharacter::Tick(float DeltaTime)
 					);
 		}
 	}
-
+	// check for line of sight from player to monster
+	if (ensure(SensingComponent != nullptr))
+	{
+		const float DistToMonster = GetHorizontalDistanceTo(MonsterActor);
+		if (DistToMonster < 1000)
+		{
+			double Multiplier = DistToMonsterMgMultiplier;
+			Multiplier = FMath::GetMappedRangeValueClamped(FVector2d(1000, 0), FVector2d(0, Multiplier), DistToMonster);
+			Multiplier = FMath::Clamp(Multiplier, 0, DistToMonsterMgMultiplier);
+			MyDirector->ChangeMenaceGauge(Multiplier * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()));
+			UE_LOG(LogTemp, Display, TEXT("Multiplier %f"), Multiplier);
+		}
+		if (SensingComponent->HasLineOfSightTo(MonsterActor))
+		{
+			MyDirector->ChangeMenaceGauge(LOSToMonsterMgMultiplier * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()));
+		}
+	}
+	// check for speed and make noise
+	if (const float Speed = UKismetMathLibrary::VSize(GetCharacterMovement()->Velocity); Speed > 300)
+	{
+		MakeNoise(0.015, GetInstigator(), GetActorLocation(), 1000.f);
+	}
 }
 
 // Called to bind functionality to input

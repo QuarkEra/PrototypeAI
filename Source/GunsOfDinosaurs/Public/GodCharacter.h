@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "GodCharacter.generated.h"
 
+class ADirector;
+class AMonsterCharacter;
+class UPawnSensingComponent;
 class UGodInventoryComponent;
 class AGodWeapon;
 class UCameraComponent;
@@ -23,15 +26,23 @@ class GUNSOFDINOSAURS_API AGodCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	AGodCharacter();
+	void ReceiveNewDirector(ADirector* NewDirector);
 	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	
+	UPROPERTY()
+	ADirector* MyDirector;
+	
 	UPROPERTY(BlueprintReadOnly, Category=Components)
 	UCameraComponent* CameraComp;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Components)
 	USkeletalMeshComponent* Mesh1P;
+	UPROPERTY()
+	UPawnSensingComponent* SensingComponent;
+	UPROPERTY(EditDefaultsOnly,Category=Monster)
+	AActor* MonsterActor;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputMappingContext* InputMapping;
@@ -68,5 +79,10 @@ public:
 	AGodWeapon* CurrentWeapon;
 
 	void CharacterCaught(const FVector& CatcherLocation);
+
+	UPROPERTY(EditAnywhere, Category=Monster)
+	float LOSToMonsterMgMultiplier;
+	UPROPERTY(EditAnywhere, Category=Monster, meta=(ClampMin=0, ClampMax=10))
+	double DistToMonsterMgMultiplier;
 
 };

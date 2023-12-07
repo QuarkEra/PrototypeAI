@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Director.generated.h"
 
+class AGodCharacter;
 class AMonsterCharacter;
 class AAI_MonsterController;
 class UNavigationSystemV1;
@@ -23,11 +24,14 @@ public:
 	float CheckMenaceGauge() const;
 
 	void GiveNewTask();
+	ADirector::Super* GiveMonsterActor();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere)
+	AGodCharacter* PlayerCharacter;
 	UPROPERTY(EditInstanceOnly)
 	AMonsterCharacter* MonsterCharacter;
 	UPROPERTY()
@@ -39,8 +43,7 @@ protected:
 private:
 
 	FNavLocation TempLocation;
-	UPROPERTY(VisibleAnywhere)
-	float MenaceGauge;
+
 	
 	void BackOff();
 	// Still undecided on how much control to give Director this early in introduction
@@ -51,4 +54,7 @@ private:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
+	UPROPERTY(VisibleAnywhere)
+	float MenaceGauge;
 };

@@ -4,12 +4,15 @@
 #include "Director.h"
 
 #include "AI_MonsterController.h"
+#include "GodCharacter.h"
 #include "MonsterCharacter.h"
 #include "NavigationSystem.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
-ADirector::ADirector(): MonsterCharacter(nullptr), MonsterAI(nullptr), NavSys(nullptr), MenaceGauge(0)
+ADirector::ADirector(): PlayerCharacter(nullptr), MonsterCharacter(nullptr), MonsterAI(nullptr), NavSys(nullptr),
+                        MenaceGauge(0)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -31,6 +34,11 @@ void ADirector::BeginPlay()
 	{
 		MonsterAI->ReceiveNewDirector(this);
 	}
+	PlayerCharacter = Cast<AGodCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (ensure(PlayerCharacter))
+	{
+		PlayerCharacter->ReceiveNewDirector(this);
+	}
 
 	NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
 	
@@ -43,15 +51,20 @@ float ADirector::CheckMenaceGauge() const
 
 void ADirector::GiveNewTask()
 {
-	if (MenaceGauge > 66)
+	if (MenaceGauge > 99)
 	{
 		BackOff();
 	}
-	else if (MenaceGauge <= 65)
+	else if (MenaceGauge <= 99)
 	{
 		MonsterAI->FillNavPoints(TempLocation);
 		MonsterAI->LookAround();
 	}
+}
+
+ADirector::Super* ADirector::GiveMonsterActor()
+{
+	return Cast<AActor>(MonsterCharacter);
 }
 
 void ADirector::BackOff()
