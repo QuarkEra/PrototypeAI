@@ -219,7 +219,11 @@ void AGodCharacter::CharacterCaught(const FVector& CatcherLocation)
 {
 	bCaught = true;
 	FaceDeath = CatcherLocation;
-	DisableInput(Cast<APlayerController>(GetController()));
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		DisableInput(PC);
+	}
+	
 }
 
 

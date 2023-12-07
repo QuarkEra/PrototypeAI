@@ -274,10 +274,11 @@ void AAI_MonsterController::OnNoiseHeard(APawn* HeardPawn, const FVector& NoiseL
 		{
 			CurrentState = EMonsterState::Hunting_In_Vent;
 			NextState = EMonsterState::Hunting_Out_Of_Vent;
-			// SetWantsToVent(false);
+			SetWantsToVent(false);
+			
 			AGodVent* NearestVent = GetNearestVentToHuntFrom(NoiseLocation);
-			// FVector VentLocation = NearestVent->GetActorLocation();
-			//MonsterCharacter->SetActorEnableCollision(true);
+			FVector VentLocation = NearestVent->GetActorLocation();
+			MonsterCharacter->SetActorEnableCollision(true);
 			bWantsToHunt = true;
 			SensingComponent->SetSensingUpdatesEnabled(false);
 
