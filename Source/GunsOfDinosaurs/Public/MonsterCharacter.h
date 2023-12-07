@@ -16,13 +16,13 @@ class GUNSOFDINOSAURS_API AMonsterCharacter : public ACharacter
 {
 	GENERATED_BODY()
 protected:
-	UPROPERTY(EditAnywhere, Category = MonsterAI)
+	UPROPERTY(EditAnywhere, Category = AiMonster)
 	float LongRangeSight;
-	UPROPERTY(EditAnywhere, Category = MonsterAI)
+	UPROPERTY(EditAnywhere, Category = AiMonster)
 	float LongRangeFieldOfView;
-	UPROPERTY(EditAnywhere, Category = MonsterAI)
+	UPROPERTY(EditAnywhere, Category = AiMonster)
 	float HearingRange;
-	UPROPERTY(EditAnywhere, Category = MonsterAI)
+	UPROPERTY(EditAnywhere, Category = AiMonster)
 	float HearingRangeLineOfSight;
 	
 public:
@@ -30,6 +30,8 @@ public:
 	AMonsterCharacter();
 	void MonsterScream() const;
 	void MonsterHostileScream() const;
+	UPROPERTY(EditDefaultsOnly, Category=AiMonster)
+	bool bEnableFlickeringLights;
 
 protected:
 	// Called when the game starts or when spawned
@@ -37,7 +39,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere)
 	UPawnSensingComponent* PawnSensingComponent;
-	UPROPERTY(EditAnywhere, Category = MonsterAI)
+	UPROPERTY(EditAnywhere, Category = AiMonster)
 	double FlickerRadius;
 
 	UPROPERTY(EditDefaultsOnly, Category="Audio")

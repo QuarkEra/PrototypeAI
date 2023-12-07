@@ -64,7 +64,11 @@ void ADirector::GiveNewTask()
 
 ADirector::Super* ADirector::GiveMonsterActor()
 {
-	return Cast<AActor>(MonsterCharacter);
+	if (MonsterCharacter != nullptr)
+	{
+		return Cast<AActor>(MonsterCharacter);
+	}
+	return nullptr;
 }
 
 void ADirector::BackOff()

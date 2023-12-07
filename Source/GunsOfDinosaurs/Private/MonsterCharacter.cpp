@@ -42,7 +42,11 @@ void AMonsterCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	// This actor handles flickering lights by distance
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFlickeringLight::StaticClass(), FoundFlickeringLights);
+	if (bEnableFlickeringLights)
+	{
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFlickeringLight::StaticClass(), FoundFlickeringLights);
+	}
+	
 	
 	Scream = LoadObject<USoundCue>(nullptr, TEXT("/Game/Audio/Monster/SC_MonsterScream.SC_MonsterScream"));
 	HostileScream = LoadObject<USoundCue>(nullptr, TEXT("/Game/Audio/BL-FREE22_Creatures_Designed_Cue.BL-FREE22_Creatures_Designed_Cue"));
@@ -74,33 +78,37 @@ void AMonsterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (FoundFlickeringLights.Num() > 0)
+	if (bEnableFlickeringLights)
 	{
-		for (AActor* Light : FoundFlickeringLights)
+		if (FoundFlickeringLights.Num() > 0)
 		{
-			if (Light != nullptr)
+			for (AActor* Light : FoundFlickeringLights)
 			{
-				FVector LightLocation = Light->GetActorLocation();
-				FVector MyLocation = GetActorLocation();
-
-				double VectorDifference = UKismetMathLibrary::Vector_Distance2D(LightLocation, MyLocation);
-				
-				AFlickeringLight* FlickeringLight = Cast<AFlickeringLight>(Light);
-			
-				if (VectorDifference <= PawnSensingComponent->SightRadius)
+				if (Light != nullptr)
 				{
-					FlickeringLight->ReceiveDistance(VectorDifference, PawnSensingComponent->SightRadius);
-					FlickeringLight->SetShouldFlicker(true);
-					//FlickeringLight->ShouldChangeIntensity = true;
-				}
-				else
-				{
-					FlickeringLight->SetShouldFlicker(false);
-					//FlickeringLight->ShouldChangeIntensity = false;
+					FVector LightLocation = Light->GetActorLocation();
+					FVector MyLocation = GetActorLocation();
+        
+					double VectorDifference = UKismetMathLibrary::Vector_Distance2D(LightLocation, MyLocation);
+        				
+					AFlickeringLight* FlickeringLight = Cast<AFlickeringLight>(Light);
+        			
+					if (VectorDifference <= PawnSensingComponent->SightRadius)
+					{
+						FlickeringLight->ReceiveDistance(VectorDifference, PawnSensingComponent->SightRadius);
+						FlickeringLight->SetShouldFlicker(true);
+						//FlickeringLight->ShouldChangeIntensity = true;
+					}
+					else
+					{
+						FlickeringLight->SetShouldFlicker(false);
+						//FlickeringLight->ShouldChangeIntensity = false;
+					}
 				}
 			}
 		}
 	}
+	
 	//DrawDebugSphere(GetWorld(), GetActorLocation(), 32.f, 12, FColor::White, false, 0, 0, 1);
 }
 

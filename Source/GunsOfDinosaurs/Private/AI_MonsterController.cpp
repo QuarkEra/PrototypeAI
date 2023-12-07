@@ -184,7 +184,7 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 	// get last player location a second after running around a corner?
 	
 	// kill player when close enough
-	if (MonsterCharacter->GetDistanceTo(PawnSeen) < 100.f)
+	if (MonsterCharacter->GetDistanceTo(PawnSeen) < 125.f)
 	{
 		if (!PlayerCaught)
 		{
@@ -577,7 +577,11 @@ void AAI_MonsterController::StartIdle()
 	const AGodVent* VentToHideIn = GetNearestVentToHideIn();
 	SetWantsToVent(true);
 	SetWantsToHunt(false);
-	MoveToLocation(VentToHideIn->GetActorLocation());
+	if (VentToHideIn != nullptr)
+	{
+		MoveToLocation(VentToHideIn->GetActorLocation());
+	}
+	
 }
 
 void AAI_MonsterController::PrepareToSearch()
