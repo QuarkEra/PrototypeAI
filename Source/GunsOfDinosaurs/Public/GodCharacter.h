@@ -51,6 +51,9 @@ protected:
 	void StopShootWeapon();
 	void CycleAmmoType();
 
+	bool bCaught;
+	FVector FaceDeath;
+
 
 public:	
 	// Called every frame

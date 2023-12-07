@@ -181,7 +181,7 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 	bWantsToVent = false;
 	LastKnownPlayerLocation = PawnSeen->GetActorLocation();
 	
-	if (MonsterCharacter->GetDistanceTo(PawnSeen) < 150.f)
+	if (MonsterCharacter->GetDistanceTo(PawnSeen) < 100.f)
 	{
 		if (!PlayerCaught)
 		{
@@ -366,7 +366,7 @@ FNavLocation AAI_MonsterController::HuntAroundPlayerLocation()
 
 void AAI_MonsterController::KillPlayer()
 {
-	GetWorldTimerManager().SetTimer(TH_ShortDelay_TimerHandle, this, &AAI_MonsterController::RestartLevel, 3.0f);
+	GetWorldTimerManager().SetTimer(TH_ShortDelay_TimerHandle, this, &AAI_MonsterController::RestartLevel, 1.2f);
 	MonsterCharacter->MonsterHostileScream();
 	GodPlayer->CharacterCaught(MonsterCharacter->GetActorLocation());
 }

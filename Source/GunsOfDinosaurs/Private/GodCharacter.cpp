@@ -114,6 +114,31 @@ void AGodCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (bCaught)
+	{
+		FRotator NewRot = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), FaceDeath);
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		if (PC)
+		{
+			PC->SetControlRotation(
+				FMath::RInterpTo(
+					PC->GetControlRotation(),
+					NewRot,
+					UGameplayStatics::GetWorldDeltaSeconds(GetWorld()),
+					5));
+		}
+		if (CameraComp)
+		{
+			CameraComp->SetFieldOfView(
+				FMath::FInterpTo(
+					CameraComp->FieldOfView,
+					CameraComp->FieldOfView - 5,
+					UGameplayStatics::GetWorldDeltaSeconds(GetWorld()),
+					5)
+					);
+		}
+	}
+
 }
 
 // Called to bind functionality to input
@@ -148,6 +173,8 @@ void AGodCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 void AGodCharacter::CharacterCaught(const FVector& CatcherLocation)
 {
+	bCaught = true;
+	FaceDeath = CatcherLocation;
 	DisableInput(Cast<APlayerController>(GetController()));
 }
 
