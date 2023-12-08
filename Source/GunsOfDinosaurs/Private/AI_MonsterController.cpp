@@ -213,7 +213,10 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 					const float DotProduct = DotProductToOtherActor(GodPlayer); 
 					if (DotProduct < 0)
 					{
-						if (SensingComponent->HasLineOfSightTo(GodPlayer))
+						float Dist = GetDistanceToOther(GodPlayer);
+						float StopDist = MonsterCharacter->GetSafestFlameDistance();
+						UE_LOG(LogTemp, Display, TEXT("Distance to player %f, Safe Distance %f"), Dist, StopDist)
+						if (SensingComponent->HasLineOfSightTo(GodPlayer) && Dist < StopDist)
 						{
 							StopMovement();
 						}
@@ -263,9 +266,6 @@ void AAI_MonsterController::OnPawnSeen(APawn* PawnSeen)
 void AAI_MonsterController::OnNoiseHeard(APawn* HeardPawn, const FVector& NoiseLocation, float Volume)
  {
 	NoiseHeardLocation = NoiseLocation;
-
-	// Small MG increment for player making noise/distractions
-	MyDirector->ChangeMenaceGauge(10.f);
 	
 	if (HeardPawn != nullptr)
 	{
@@ -296,7 +296,6 @@ void AAI_MonsterController::OnNoiseHeard(APawn* HeardPawn, const FVector& NoiseL
 			SetNewState(EMonsterState::Hunting_Out_Of_Vent, nullptr);
 			HuntLocation(NoiseHeardLocation);
 		}
-		
 	}
 }
 
@@ -384,6 +383,7 @@ void AAI_MonsterController::Roam()
 	//GetWorld()->GetTimerManager().SetTimer(Roam_TimerHandle, this, &AAI_MonsterController::ReturnToVent,RoamTimer);
 }
 
+// currently unused after Director inclusion
 void AAI_MonsterController::ReturnToVent()
 {
 	//MyDirector->GetNewAction();
@@ -498,7 +498,7 @@ AGodVent* AAI_MonsterController::GetNearestVentToHuntFrom(const FVector& NewNois
 	return NearestVent;
 }
 
-// Not in use right now
+// Should be in use for Wandering in vent
 void AAI_MonsterController::MoveToRandomVent()
 {
 	if (VentActors.Num() > 0)
@@ -507,6 +507,7 @@ void AAI_MonsterController::MoveToRandomVent()
 		if (RandInt != NULL)
 		{
 			const FVector VentLocation = VentActors[RandInt]->GetActorLocation();
+			bTravellingToPoint = true;
 			MoveToLocation(VentLocation);
 		}
 	}
@@ -522,6 +523,11 @@ float AAI_MonsterController::DotProductToOtherActor(AActor* OtherActor)
 		return FVector::DotProduct(OtherActorVector, Offset);
 	}
 	return -2.0;
+}
+
+float AAI_MonsterController::GetDistanceToOther(AActor* TheOther) const
+{
+	return TheOther ? (MonsterCharacter->GetActorLocation() - TheOther->GetActorLocation()).Size() : 0.0f;
 }
 
 EMonsterState AAI_MonsterController::GetCurrentState() const
@@ -561,6 +567,8 @@ void AAI_MonsterController::SetNewState(EMonsterState NewState, APawn* PawnHunte
 		GetNewAction();
 		break;
 	case EMonsterState::Wandering_In_Vent:
+		CharacterMovementComponent->MaxWalkSpeed = 350;
+		GetNewAction();
 		break;
 	case EMonsterState::Hunting_Out_Of_Vent:
 		StartHunting(PawnHunted);
@@ -573,7 +581,6 @@ void AAI_MonsterController::SetNewState(EMonsterState NewState, APawn* PawnHunte
 
 void AAI_MonsterController::StartIdle()
 {
-	MonsterCharacter->MonsterScream();
 	CharacterMovementComponent->MaxWalkSpeed = 350;
 	const AGodVent* VentToHideIn = GetNearestVentToHideIn();
 	SetWantsToVent(true);
@@ -582,7 +589,7 @@ void AAI_MonsterController::StartIdle()
 	{
 		MoveToLocation(VentToHideIn->GetActorLocation());
 	}
-	
+	NextState = EMonsterState::Wandering_In_Vent;
 }
 
 void AAI_MonsterController::PrepareToSearch()
@@ -662,6 +669,14 @@ void AAI_MonsterController::LookAround()
 	}
 }
 
+void AAI_MonsterController::WanderVents()
+{
+	if (NavSys)
+	{
+		MoveToRandomVent();
+	}
+}
+
 void AAI_MonsterController::StartSearching(FNavLocation LocationToSearch)
 {
 	UE_LOG(LogTemp, Display, TEXT("Starting Search"))
@@ -700,14 +715,14 @@ void AAI_MonsterController::StartEscaping()
 void AAI_MonsterController::Escape()
 {
 	bIsHostile = false;
-	UE_LOG(LogTemp, Display, TEXT("Escaping"))
 	//GetWorld()->GetTimerManager().ClearTimer(OutOfVent_TimerHandle);	// Stop ReturnToVent  happening in ExitVent() 
 	CharacterMovementComponent->MaxWalkSpeed = 600;						// Gotta go fast
 	const AGodVent* VentToHideIn = GetNearestVentToHideIn();			// Hide faster
 	SetWantsToVent(true);												// Can enter vent when close
 	SetWantsToHunt(false);												// Will not ExitVent() on overlap
 	SensingComponent->SetSensingUpdatesEnabled(false);					// Do not muck around just run away
-	MoveToLocation(VentToHideIn->GetActorLocation());					// Go
+	MoveToLocation(VentToHideIn->GetActorLocation());				// Go
+	NextState = EMonsterState::Wandering_In_Vent;
 }
 
 void AAI_MonsterController::EnterVent()
@@ -715,14 +730,16 @@ void AAI_MonsterController::EnterVent()
 	bInVent = true;
 	SetWantsToVent(false);
 	bSeenPlayer = false;
-	//GetWorld()->GetTimerManager().ClearTimer(PlayerSeen_TimerHandle);
 	MonsterCharacter->GetMesh()->SetVisibility(false);
-	MonsterCharacter->SetActorEnableCollision(false);
+	//MonsterCharacter->SetActorEnableCollision(false);
 	MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	CharacterMovementComponent->StopActiveMovement();
 	SensingComponent->SetSensingUpdatesEnabled(true);
 	SensingComponent->SightRadius = 0;
-	//GetWorld()->GetTimerManager().SetTimer(MaxIdle_TimerHandle, this, &AAI_MonsterController::PrepareToSearch, MaxIdleTimer);
+	if (CurrentState == EMonsterState::Escaping)
+	{
+		SetNewState(NextState, nullptr);
+	}
 }
 
 void AAI_MonsterController::ExitVent()

@@ -32,8 +32,15 @@ AMonsterCharacter::AMonsterCharacter()
 	PawnSensingComponent->LOSHearingThreshold = HearingRangeLineOfSight;
 	FlickerRadius = 1500;
 
+	SafestFlameDistance = 800;
+
 	//PawnSensingComponent->SetSensingUpdatesEnabled(false);
 	
+}
+
+float AMonsterCharacter::GetSafestFlameDistance()
+{
+	return this->SafestFlameDistance;
 }
 
 // Called when the game starts or when spawned

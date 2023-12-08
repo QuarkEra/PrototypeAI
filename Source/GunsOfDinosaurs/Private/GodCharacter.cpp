@@ -52,8 +52,10 @@ void AGodCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	MonsterActor = MyDirector->GiveMonsterActor();
-	
+	if (MyDirector->GiveMonsterActor() != nullptr)
+	{
+		MonsterActor = MyDirector->GiveMonsterActor();
+	}
 }
 
 void AGodCharacter::Move(const FInputActionInstance& Instance)

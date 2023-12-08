@@ -21,7 +21,7 @@ ADirector::ADirector(): PlayerCharacter(nullptr), MonsterCharacter(nullptr), Mon
 void ADirector::ChangeMenaceGauge(float DeltaMenace)
 {
 	MenaceGauge += DeltaMenace;
-	FMath::Clamp(MenaceGauge, 0, 100);
+	MenaceGauge = FMath::Clamp(MenaceGauge, 0, 100);
 }
 
 // Called when the game starts or when spawned
@@ -41,7 +41,6 @@ void ADirector::BeginPlay()
 	}
 
 	NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
-	
 }
 
 float ADirector::CheckMenaceGauge() const
@@ -57,8 +56,25 @@ void ADirector::GiveNewTask()
 	}
 	else if (MenaceGauge <= 99)
 	{
-		MonsterAI->FillNavPoints(TempLocation);
-		MonsterAI->LookAround();
+		switch (MonsterAI->GetCurrentState())
+		{
+		case EMonsterState::Wandering_Out_Of_Vent:
+			MonsterAI->LookAround();
+			break;
+		case EMonsterState::Wandering_In_Vent:
+			MonsterAI->WanderVents();
+			break;
+		default:
+			if (MonsterAI->bInVent)
+			{
+				MonsterAI->WanderVents();
+			}
+			else
+			{
+				MonsterAI->LookAround();
+			}
+			break;
+		}
 	}
 }
 

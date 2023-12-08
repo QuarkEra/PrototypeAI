@@ -24,6 +24,8 @@ protected:
 	float HearingRange;
 	UPROPERTY(EditAnywhere, Category = AiMonster)
 	float HearingRangeLineOfSight;
+	UPROPERTY(EditAnywhere, Category = AiMonster)
+	float SafestFlameDistance;
 	
 public:
 	// Sets default values for this character's properties
@@ -32,6 +34,7 @@ public:
 	void MonsterHostileScream() const;
 	UPROPERTY(EditDefaultsOnly, Category=AiMonster)
 	bool bEnableFlickeringLights;
+	float GetSafestFlameDistance();
 
 protected:
 	// Called when the game starts or when spawned

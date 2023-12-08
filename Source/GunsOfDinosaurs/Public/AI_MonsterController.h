@@ -96,19 +96,9 @@ protected:
 	float OutOfVentTimer; // when leaving vent ReturnToVent/Search
 	FTimerHandle OutOfVent_TimerHandle;
 
-
-	/*
-	* Director Functions
-	*/
 	void MoveToRandomVent();
 	void ReturnToVent();
-	// DONE void CheckMenaceGuage
-	// void GiveAlienNewTask(AlienCharacter); 
-	// new monster function void RecieveNewTask Adds 
-	// activate and disable monster
-
-
-
+	
 	/*
 	* Bluprint in CharacterActor to set up modular monsters per project
 	*/
@@ -120,15 +110,10 @@ protected:
 	int MaxSearchAttempts;
 	float MySightRadius;
 	float SightDistanceMultiplier;
-	// @TODO: BP visible setup for sight hearing etc per monster
-
-
 
 	/*
 	* Character Functions
 	*/
-
-	// @TODO: Update MenaceGauge on pawn interactions including player lineofsight
 	UFUNCTION()
 	void OnPawnSeen(APawn* PawnSeen);
 	UFUNCTION()
@@ -153,22 +138,17 @@ protected:
 	/*
 	* MonsterAI stuff that can remain post refactor
 	*/
-
 	FVector LastKnownPlayerLocation;
 	FVector SeenPlayerLocation;
 	FVector NoiseHeardLocation;
-	// @TODO: no longer needed in instance
-	UPROPERTY(VisibleInstanceOnly)
 	float TimePawnSeen;
-	UPROPERTY(VisibleInstanceOnly)
-	bool bSeenPlayer;
-
 	bool bIsSearchingForPlayer;
+	
+	bool bSeenPlayer;	
 	bool bWantsToVent;
 	bool bWantsToHunt;
 	bool bIsHostile;
-
-
+	
 	FNavLocation RandomLocationToSearch;
 
 	virtual void BeginPlay() override;
@@ -177,6 +157,8 @@ protected:
 	APawn* HuntedPawn;
 	UPROPERTY()
 	APawn* ControlledPawn;
+
+	
 	UPROPERTY()
 	AMonsterCharacter* MonsterCharacter;
 
@@ -208,6 +190,7 @@ protected:
 	AGodCharacter* GodPlayer;
 	
 	float DotProductToOtherActor(AActor* OtherActor);
+	float GetDistanceToOther(AActor* TheOther) const;
 
 public:
 	// I trust Rider with whatever this extra stuff is
@@ -247,4 +230,5 @@ public:
 	void PrepareToSearch();
 	void FillNavPoints(FNavLocation& NewLocation);
 	void LookAround();
+	void WanderVents();
 };
