@@ -16,8 +16,90 @@
 #include "Perception/PawnSensingComponent.h"
 #include <GunsOfDinosaurs/Weapons/GodWeapon.h>
 
-#include "InterchangeResult.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Hearing.h"
+#include "Perception/AISenseConfig_Sight.h"
 
+AAI_MonsterController::AAI_MonsterController()
+{
+	UaiPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception Component"));
+	if (UaiPerceptionComponent)
+	{
+		SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+		HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
+	}
+	if (SightConfig)
+	{
+		SightConfig->SightRadius = 1000.f;
+	}
+	if (HearingConfig)
+	{
+		HearingConfig->HearingRange = 5000.f;
+	}
+}
+
+void AAI_MonsterController::PerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+{
+	if (Stimulus.WasSuccessfullySensed())
+	{
+		if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
+		{
+			UE_LOG(LogTemp, Display, TEXT("Sound Perceived"))
+		}
+		else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
+		{
+			UE_LOG(LogTemp, Display, TEXT("Sight Perceived"))
+		}
+	}
+}
+
+void AAI_MonsterController::BeginPlay()
+ {
+ 	Super::BeginPlay();
+ 
+ 	ControlledPawn = GetPawn();
+ 
+ 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGodVent::StaticClass(), VentActors);
+ 
+ 	NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+ 
+ 	MonsterCharacter = Cast<AMonsterCharacter>(ControlledPawn);
+ 	if (MonsterCharacter != nullptr)
+ 	{
+ 		CharacterMovementComponent = MonsterCharacter->GetCharacterMovement();
+ 	}
+ 
+ 	if (ControlledPawn)
+ 	{
+ 		 SensingComponent = ControlledPawn->FindComponentByClass<UPawnSensingComponent>();
+ 		if (SensingComponent)
+ 		{
+ 			SensingComponent->OnSeePawn.AddDynamic(this, &AAI_MonsterController::OnPawnSeen);
+ 			SensingComponent->OnHearNoise.AddDynamic(this, &AAI_MonsterController::OnNoiseHeard);
+ 			
+ 			MySightRadius = SensingComponent->SightRadius;
+ 		}
+ 	}
+ 
+ 	//SensingComponent->SetSensingUpdatesEnabled(false);
+ 	//MonsterCharacter->GetMesh()->SetVisibility(false);
+ 	//MonsterCharacter->SetActorEnableCollision(false);
+ 	//MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+ 
+ 	//RoamTimer = 15.f;
+ 	//PlayerSeenTimer = 4.5f;
+ 	//MaxIdleTimer = 35.f;
+ 	//PostHostilityTimer = 1.5f;
+ 	//OutOfVentTimer = 15.f;
+ 
+ 	PlacesToSearch = 5;
+
+    if (ensure(PerceptionComponent))
+    {
+    	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AAI_MonsterController::PerceptionUpdated);
+    }
+	
+ }
 
 void AAI_MonsterController::ReceiveNewDirector(ADirector* NewDirector)
 {
@@ -71,48 +153,6 @@ bool AAI_MonsterController::IsWantsToVent() const
 APawn* AAI_MonsterController::GetHuntedPawn() const
 {
 	return HuntedPawn;
-}
-
-void AAI_MonsterController::BeginPlay()
-{
-	Super::BeginPlay();
-
-	ControlledPawn = GetPawn();
-
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGodVent::StaticClass(), VentActors);
-
-	NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
-
-	MonsterCharacter = Cast<AMonsterCharacter>(ControlledPawn);
-	if (MonsterCharacter != nullptr)
-	{
-		CharacterMovementComponent = MonsterCharacter->GetCharacterMovement();
-	}
-
-	if (ControlledPawn)
-	{
-		 SensingComponent = ControlledPawn->FindComponentByClass<UPawnSensingComponent>();
-		if (SensingComponent)
-		{
-			SensingComponent->OnSeePawn.AddDynamic(this, &AAI_MonsterController::OnPawnSeen);
-			SensingComponent->OnHearNoise.AddDynamic(this, &AAI_MonsterController::OnNoiseHeard);
-			
-			MySightRadius = SensingComponent->SightRadius;
-		}
-	}
-
-	//SensingComponent->SetSensingUpdatesEnabled(false);
-	//MonsterCharacter->GetMesh()->SetVisibility(false);
-	//MonsterCharacter->SetActorEnableCollision(false);
-	//MonsterCharacter->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	//RoamTimer = 15.f;
-	//PlayerSeenTimer = 4.5f;
-	//MaxIdleTimer = 35.f;
-	//PostHostilityTimer = 1.5f;
-	//OutOfVentTimer = 15.f;
-
-	PlacesToSearch = 5;
 }
 
 void AAI_MonsterController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)

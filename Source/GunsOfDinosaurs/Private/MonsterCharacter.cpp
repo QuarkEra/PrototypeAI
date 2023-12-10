@@ -17,9 +17,9 @@ AMonsterCharacter::AMonsterCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
-	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 
+	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
+	
 	LongRangeSight = 1250.f;
 	LongRangeFieldOfView = 65.f;
 	HearingRange = 40000;
@@ -33,8 +33,6 @@ AMonsterCharacter::AMonsterCharacter()
 	FlickerRadius = 1500;
 
 	SafestFlameDistance = 800;
-
-	//PawnSensingComponent->SetSensingUpdatesEnabled(false);
 	
 }
 

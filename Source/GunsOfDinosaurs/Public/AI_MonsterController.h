@@ -4,8 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "AI_MonsterController.generated.h"
 
+class UAISenseConfig_Hearing;
+class UAISenseConfig_Sight;
+struct FAIStimulus;
+class UAISenseConfig;
 class ADirector;
 class AGodVent;
 class AGodCharacter;
@@ -74,7 +79,25 @@ protected:
 	UPROPERTY()
 	ADirector* MyDirector;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAIPerceptionComponent* UaiPerceptionComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAISenseConfig_Sight* SightConfig;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAISenseConfig_Hearing* HearingConfig;
+	// @TODO:	UPROPERTY(BlueprintAssignable)
+	//			FActorPerceptionForgetUpdatedDelegate OnTargetPerceptionForgotten;
+	//
+	//			for when losing view of player
+	
+	UFUNCTION(BlueprintCallable, Category = "AiMonster", meta = (AllowPrivateAccess = true))
+	void PerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	
 public:
+	AAI_MonsterController();
+
+	
+	
 	void ReceiveNewDirector(ADirector* NewDirector);
 	
 	bool bInVent;
@@ -157,7 +180,6 @@ protected:
 	APawn* HuntedPawn;
 	UPROPERTY()
 	APawn* ControlledPawn;
-
 	
 	UPROPERTY()
 	AMonsterCharacter* MonsterCharacter;

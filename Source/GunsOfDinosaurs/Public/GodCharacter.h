@@ -27,6 +27,24 @@ public:
 	// Sets default values for this character's properties
 	AGodCharacter();
 	void ReceiveNewDirector(ADirector* NewDirector);
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; };
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Weapon")
+	AGodWeapon* CurrentWeapon;
+
+	void CharacterCaught(const FVector& CatcherLocation);
+
+	UPROPERTY(EditAnywhere, Category=Monster)
+	float LOSToMonsterMgMultiplier;
+	UPROPERTY(EditAnywhere, Category=Monster, meta=(ClampMin=0, ClampMax=10))
+	double DistToMonsterMgMultiplier;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -57,6 +75,7 @@ protected:
 		
 	void Move(const FInputActionInstance& Instance);
 	void Look(const FInputActionValue& Value);
+	
 	UFUNCTION(BlueprintCallable)
 	void ShootWeapon();
 	void StopShootWeapon();
@@ -64,25 +83,4 @@ protected:
 
 	bool bCaught;
 	FVector FaceDeath;
-
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; };
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Weapon")
-	AGodWeapon* CurrentWeapon;
-
-	void CharacterCaught(const FVector& CatcherLocation);
-
-	UPROPERTY(EditAnywhere, Category=Monster)
-	float LOSToMonsterMgMultiplier;
-	UPROPERTY(EditAnywhere, Category=Monster, meta=(ClampMin=0, ClampMax=10))
-	double DistToMonsterMgMultiplier;
-
 };
