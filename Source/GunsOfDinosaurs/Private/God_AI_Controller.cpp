@@ -4,10 +4,13 @@
 #include "God_AI_Controller.h"
 
 #include "God_Alien.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
 
-AGod_AI_Controller::AGod_AI_Controller(FObjectInitializer const& ObjectInitializer)
+AGod_AI_Controller::AGod_AI_Controller( FObjectInitializer const& ObjectInitializer )
 {
-	
+	SetupPerceptionSystem();
 }
 
 void AGod_AI_Controller::BeginPlay()
@@ -16,13 +19,13 @@ void AGod_AI_Controller::BeginPlay()
 	
 }
 
-void AGod_AI_Controller::OnPossess(APawn* InPawn)
+void AGod_AI_Controller::OnPossess( APawn* InPawn )
 {
-	Super::OnPossess(InPawn);
+	Super::OnPossess( InPawn );
 
-	if (AGod_Alien* const Alien = Cast<AGod_Alien>(InPawn))
+	if ( AGod_Alien* const Alien = Cast< AGod_Alien >( InPawn ) )
 	{
-		if (UBehaviorTree* const Tree = Alien->GetBehaviourTree())
+		if ( UBehaviorTree* const Tree = Alien->GetBehaviourTree() )
 		{
 			UBlackboardComponent* b;
 			UseBlackboard(Tree->BlackboardAsset, b);
@@ -31,5 +34,29 @@ void AGod_AI_Controller::OnPossess(APawn* InPawn)
 		}
 	}
 
+}
+
+void AGod_AI_Controller::SetupPerceptionSystem() {
+	SightConfig = CreateDefaultSubobject< UAISenseConfig_Sight >( TEXT ( "Sight Config" ) );
+	if ( SightConfig ) {
+		SetPerceptionComponent( *CreateDefaultSubobject< UAIPerceptionComponent >( TEXT ( "Perception Component" ) ) );
+		SightConfig->SightRadius = 500.0f;
+		SightConfig->LoseSightRadius = SightConfig->SightRadius + 50.0f;
+		SightConfig->PeripheralVisionAngleDegrees = 90.0f;
+		SightConfig->SetMaxAge( 5.0f );
+		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+		SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+		SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+
+		GetPerceptionComponent()->SetDominantSense( *SightConfig->GetSenseImplementation() );
+		GetPerceptionComponent()->OnTargetPerceptionUpdated.AddDynamic( this, &AGod_AI_Controller::OnTargetDetected );
+		GetPerceptionComponent()->ConfigureSense( ( *SightConfig ) );
+	}
+}
+
+void AGod_AI_Controller::OnTargetDetected( AActor* Actor, FAIStimulus const Stimulus ) {
+	if ( auto * const ch =  Cast< AGod_Alien >( Actor ) ) {
+		GetBlackboardComponent()->SetValueAsBool( "CanSeePlayer", Stimulus.WasSuccessfullySensed() );		
+	}
 }
 

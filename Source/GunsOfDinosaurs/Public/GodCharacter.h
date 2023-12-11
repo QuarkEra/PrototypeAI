@@ -24,35 +24,27 @@ class GUNSOFDINOSAURS_API AGodCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
-	AGodCharacter();
-	void ReceiveNewDirector(ADirector* NewDirector);
-
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; };
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Weapon")
-	AGodWeapon* CurrentWeapon;
-
-	void CharacterCaught(const FVector& CatcherLocation);
-
 	UPROPERTY(EditAnywhere, Category=Monster)
 	float LOSToMonsterMgMultiplier;
 	UPROPERTY(EditAnywhere, Category=Monster, meta=(ClampMin=0, ClampMax=10))
 	double DistToMonsterMgMultiplier;
-	
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Weapon")
+	AGodWeapon* CurrentWeapon;   	
+
+	AGodCharacter();
+	void ReceiveNewDirector(ADirector* NewDirector);
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; };
+	void CharacterCaught(const FVector& CatcherLocation);
+
+
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	bool bCaught;
+	FVector FaceDeath;
 	
 	UPROPERTY()
 	ADirector* MyDirector;
-	
 	UPROPERTY(BlueprintReadOnly, Category=Components)
 	UCameraComponent* CameraComp;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Components)
@@ -61,7 +53,6 @@ protected:
 	UPawnSensingComponent* SensingComponent;
 	UPROPERTY(EditDefaultsOnly,Category=Monster)
 	AActor* MonsterActor;
-	
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputMappingContext* InputMapping;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
@@ -72,15 +63,19 @@ protected:
 	UInputAction* IA_ShootWeapon;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputAction* IA_CycleAmmoType;
-		
+	UPROPERTY()
+	class UAIPerceptionStimuliSourceComponent* StimulusSource;
+	
+
+	
+	virtual void BeginPlay() override;
+	void SetupStimulusSource();
 	void Move(const FInputActionInstance& Instance);
 	void Look(const FInputActionValue& Value);
-	
 	UFUNCTION(BlueprintCallable)
 	void ShootWeapon();
 	void StopShootWeapon();
 	void CycleAmmoType();
 
-	bool bCaught;
-	FVector FaceDeath;
+
 };

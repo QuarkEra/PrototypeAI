@@ -12,6 +12,8 @@
 #include "GunsOfDinosaurs/Weapons/GodWeapon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 #include "Perception/PawnSensingComponent.h"
 
 // Sets default values
@@ -35,7 +37,7 @@ AGodCharacter::AGodCharacter()
 	DistToMonsterMgMultiplier = 1;
 	
 	SetInstigator(this);
-	
+	SetupStimulusSource();
 }
 
 void AGodCharacter::ReceiveNewDirector(ADirector* NewDirector)
@@ -55,6 +57,14 @@ void AGodCharacter::BeginPlay()
 	if (MyDirector->GiveMonsterActor() != nullptr)
 	{
 		MonsterActor = MyDirector->GiveMonsterActor();
+	}
+}
+
+void AGodCharacter::SetupStimulusSource() {
+	StimulusSource = CreateDefaultSubobject< UAIPerceptionStimuliSourceComponent >( TEXT( "Stimulus ") );
+	if ( StimulusSource ) {
+		StimulusSource->RegisterForSense( TSubclassOf< UAISense_Sight >() );
+		StimulusSource->RegisterWithPerceptionSystem();
 	}
 }
 

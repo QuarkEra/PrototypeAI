@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "God_AI_Controller.generated.h"
 
 /**
@@ -15,12 +16,17 @@ class GUNSOFDINOSAURS_API AGod_AI_Controller : public AAIController
 	GENERATED_BODY()
 
 public:
-	explicit AGod_AI_Controller(FObjectInitializer const& ObjectInitializer);
-
+	explicit AGod_AI_Controller( FObjectInitializer const& ObjectInitializer );
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnPossess( APawn* InPawn ) override;
 
-	virtual void OnPossess(APawn* InPawn) override;
-	
+private:
+	UPROPERTY()
+	class UAISenseConfig_Sight* SightConfig;
+
+	void SetupPerceptionSystem();
+	UFUNCTION()
+	void OnTargetDetected( AActor* Actor, FAIStimulus const Stimulus );
 };
