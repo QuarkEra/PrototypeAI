@@ -3,22 +3,38 @@
 
 #include "God_AI_Controller.h"
 
+#include "GodCharacter.h"
 #include "God_Alien.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 
+/*
+====================
+AGod_AI_Controller::AGod_AI_Controller
+====================
+*/
 AGod_AI_Controller::AGod_AI_Controller( FObjectInitializer const& ObjectInitializer )
 {
 	SetupPerceptionSystem();
 }
 
+/*
+====================
+AGod_AI_Controller::BeginPlay
+====================
+*/
 void AGod_AI_Controller::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
+/*
+====================
+AGod_AI_Controller::OnPossess
+====================
+*/
 void AGod_AI_Controller::OnPossess( APawn* InPawn )
 {
 	Super::OnPossess( InPawn );
@@ -28,14 +44,19 @@ void AGod_AI_Controller::OnPossess( APawn* InPawn )
 		if ( UBehaviorTree* const Tree = Alien->GetBehaviourTree() )
 		{
 			UBlackboardComponent* b;
-			UseBlackboard(Tree->BlackboardAsset, b);
+			UseBlackboard( Tree->BlackboardAsset, b );
 			Blackboard = b;
-			RunBehaviorTree(Tree);
+			RunBehaviorTree( Tree );
 		}
 	}
 
 }
 
+/*
+====================
+AGod_AI_Controller::SetupPerceptionSystem
+====================
+*/
 void AGod_AI_Controller::SetupPerceptionSystem() {
 	SightConfig = CreateDefaultSubobject< UAISenseConfig_Sight >( TEXT ( "Sight Config" ) );
 	if ( SightConfig ) {
@@ -54,8 +75,13 @@ void AGod_AI_Controller::SetupPerceptionSystem() {
 	}
 }
 
+/*
+====================
+AGod_AI_Controller::OnTargetDetected
+====================
+*/
 void AGod_AI_Controller::OnTargetDetected( AActor* Actor, FAIStimulus const Stimulus ) {
-	if ( auto * const ch =  Cast< AGod_Alien >( Actor ) ) {
+	if ( auto* const ch =  Cast< AGodCharacter >( Actor ) ) {
 		GetBlackboardComponent()->SetValueAsBool( "CanSeePlayer", Stimulus.WasSuccessfullySensed() );		
 	}
 }

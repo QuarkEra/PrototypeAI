@@ -8,10 +8,20 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 
+/*
+====================
+UBTTask_FindPlayerLocation::UBTTask_FindPlayerLocation
+====================
+*/
 UBTTask_FindPlayerLocation::UBTTask_FindPlayerLocation() {
 	NodeName = "Find Player Location";
 }
 
+/*
+====================
+UBTTask_FindPlayerLocation::ExecuteTask
+====================
+*/
 EBTNodeResult::Type UBTTask_FindPlayerLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) {
 	if (const ACharacter* const Player = UGameplayStatics::GetPlayerCharacter( GetWorld(), 0 ) ) {
 		auto const PlayerLocation = Player->GetActorLocation();

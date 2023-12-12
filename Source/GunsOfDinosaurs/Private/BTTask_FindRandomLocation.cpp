@@ -7,11 +7,21 @@
 #include "NavigationSystem.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
+/*
+====================
+UBTTask_FindRandomLocation::UBTTask_FindRandomLocation
+====================
+*/
 UBTTask_FindRandomLocation::UBTTask_FindRandomLocation(FObjectInitializer const& ObjectInitializer)
 {
 		NodeName = "Find Random Location";
 }
 
+/*
+====================
+UBTTask_FindRandomLocation::ExecuteTask
+====================
+*/
 EBTNodeResult::Type UBTTask_FindRandomLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	if (const AGod_AI_Controller* Controller = Cast<AGod_AI_Controller>(OwnerComp.GetAIOwner()))
