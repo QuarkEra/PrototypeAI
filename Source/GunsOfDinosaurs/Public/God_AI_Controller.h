@@ -21,11 +21,15 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess( APawn* InPawn ) override;
+	void SetupSightConfig();
+	void SetupHearingConfig();
 
 private:
 	UPROPERTY()
 	class UAISenseConfig_Sight* SightConfig;
-
+	UPROPERTY()
+	class UAISenseConfig_Hearing* HearingConfig;
+	
 	void SetupPerceptionSystem();
 	UFUNCTION()
 	void OnTargetDetected( AActor* Actor, FAIStimulus const Stimulus );

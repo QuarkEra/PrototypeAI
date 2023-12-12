@@ -33,9 +33,12 @@ void UBTService_ChangeSpeed::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp,
 		if (const auto * const Alien = Cast< AGod_Alien >( Cont->GetPawn() ) ) {
 			if ( auto const B = OwnerComp.GetBlackboardComponent() ) {
 				if (const bool bShouldChase = B->GetValueAsBool("CanSeePlayer") ) {
-					Alien->GetCharacterMovement()->MaxWalkSpeed = Alien->GetChaseSpeed();
+					Alien->GetCharacterMovement()->MaxWalkSpeed = ChaseSpeed;
 				} else if ( !bShouldChase ) {
-					Alien->GetCharacterMovement()->MaxWalkSpeed = Alien->GetWalkSpeed();
+					Alien->GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+				}
+				if ( const bool bDistract = B->GetValueAsBool( "DistractionActive" ) ) {
+					Alien->GetCharacterMovement()->MaxWalkSpeed = DistractionSpeed;
 				}
 			}
 		}

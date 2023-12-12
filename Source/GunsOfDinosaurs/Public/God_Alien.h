@@ -27,10 +27,6 @@ private:
 	UBehaviorTree* Tree;
 	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category="AI", meta=( AllowPrivateAccess="true" ) )
 	AGod_PatrolPath* PatrolPath;
-	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category="AI", meta=( AllowPrivateAccess="true" ) )
-	float ChaseSpeed;
-	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category="AI", meta=( AllowPrivateAccess="true" ) )
-	float WalkSpeed;
 	
 	virtual void BeginPlay() override;
 

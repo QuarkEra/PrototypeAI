@@ -18,5 +18,12 @@ public:
 	UBTService_ChangeSpeed();
 
 protected:
+	UPROPERTY( EditAnywhere, BlueprintReadWrite, meta = ( AllowPrivateAccess = "true" ) )
+	float DistractionSpeed = 450.0f;
+	UPROPERTY( EditAnywhere, BlueprintReadWrite, meta = ( AllowPrivateAccess = "true" ) )
+	float WalkSpeed = 225.0f;
+	UPROPERTY( EditAnywhere, BlueprintReadWrite, meta = ( AllowPrivateAccess = "true" ) )
+	float ChaseSpeed = 560.0f;
+	
 	virtual void OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

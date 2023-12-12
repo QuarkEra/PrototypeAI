@@ -11,9 +11,6 @@ AGod_Alien::AGod_Alien
 AGod_Alien::AGod_Alien(): Tree(nullptr), PatrolPath(nullptr) {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	ChaseSpeed = 550.0f;
-	WalkSpeed = 200.0f;
 	
 }
 
