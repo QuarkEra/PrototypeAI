@@ -49,25 +49,6 @@ void AGod_Alien::SetupPlayerInputComponent( UInputComponent* PlayerInputComponen
 
 /*
 ====================
-AGod_Alien::GetChaseSpeed
-====================
-*/
-float AGod_Alien::GetChaseSpeed() const {
-	return ChaseSpeed;
-}
-
-/*
-====================
-AGod_Alien::GetWalkSpeed
-====================
-*/
-float AGod_Alien::GetWalkSpeed() const
-{
-	return WalkSpeed;
-}
-
-/*
-====================
 AGod_Alien::GetBehaviourTree
 ====================
 */

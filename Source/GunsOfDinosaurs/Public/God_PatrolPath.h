@@ -13,9 +13,7 @@ class GUNSOFDINOSAURS_API AGod_PatrolPath : public AActor
 	
 public:	
 	AGod_PatrolPath();
-
 	FVector GetPatrolPoint( int const index ) const;
-
 	int Num() const;
 
 private:

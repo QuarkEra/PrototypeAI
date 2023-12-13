@@ -25,11 +25,11 @@ class GUNSOFDINOSAURS_API AGodCharacter : public ACharacter
 
 public:
 	UPROPERTY(EditAnywhere, Category=Monster)
-	float LOSToMonsterMgMultiplier;
+	float										LOSToMonsterMgMultiplier;
 	UPROPERTY(EditAnywhere, Category=Monster, meta=(ClampMin=0, ClampMax=10))
-	double DistToMonsterMgMultiplier;
+	double										DistToMonsterMgMultiplier;
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Weapon")
-	AGodWeapon* CurrentWeapon;   	
+	AGodWeapon*									CurrentWeapon;   	
 
 	AGodCharacter();
 	void ReceiveNewDirector(ADirector* NewDirector);
@@ -40,31 +40,31 @@ public:
 
 
 protected:
-	bool bCaught;
-	FVector FaceDeath;
+	bool										bCaught;
+	FVector										FaceDeath;
 	
 	UPROPERTY()
-	ADirector* MyDirector;
+	ADirector*									MyDirector;
 	UPROPERTY(BlueprintReadOnly, Category=Components)
-	UCameraComponent* CameraComp;
+	UCameraComponent*							CameraComp;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Components)
-	USkeletalMeshComponent* Mesh1P;
+	USkeletalMeshComponent*						Mesh1P;
 	UPROPERTY()
-	UPawnSensingComponent* SensingComponent;
+	UPawnSensingComponent*						SensingComponent;
 	UPROPERTY(EditDefaultsOnly,Category=Monster)
-	AActor* MonsterActor;
+	AActor*										MonsterActor;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
-	UInputMappingContext* InputMapping;
+	UInputMappingContext*						InputMapping;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
-	UInputAction* IA_Move;
+	UInputAction*								IA_Move;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
-	UInputAction* IA_Look;
+	UInputAction*								IA_Look;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
-	UInputAction* IA_ShootWeapon;
+	UInputAction*								IA_ShootWeapon;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
-	UInputAction* IA_CycleAmmoType;
+	UInputAction*								IA_CycleAmmoType;
 	UPROPERTY()
-	class UAIPerceptionStimuliSourceComponent* StimulusSource;
+	class UAIPerceptionStimuliSourceComponent*	StimulusSource;
 	
 
 	
@@ -76,6 +76,5 @@ protected:
 	void ShootWeapon();
 	void StopShootWeapon();
 	void CycleAmmoType();
-
 
 };

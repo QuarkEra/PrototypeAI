@@ -10,6 +10,7 @@
 /**
  * 
  */
+
 UCLASS()
 class GUNSOFDINOSAURS_API AGod_AI_Controller : public AAIController
 {
@@ -17,7 +18,8 @@ class GUNSOFDINOSAURS_API AGod_AI_Controller : public AAIController
 
 public:
 	explicit AGod_AI_Controller( FObjectInitializer const& ObjectInitializer );
-
+	void UpdateSpeed( float NewSpeed );
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess( APawn* InPawn ) override;
@@ -25,10 +27,12 @@ protected:
 	void SetupHearingConfig();
 
 private:
+	FTimerHandle						SpeedIncreaseTimerHandle;
+	float								StartTime;
 	UPROPERTY()
-	class UAISenseConfig_Sight* SightConfig;
+	class UAISenseConfig_Sight*			SightConfig;
 	UPROPERTY()
-	class UAISenseConfig_Hearing* HearingConfig;
+	class UAISenseConfig_Hearing*		HearingConfig;
 	
 	void SetupPerceptionSystem();
 	UFUNCTION()

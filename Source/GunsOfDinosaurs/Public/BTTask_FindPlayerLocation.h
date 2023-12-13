@@ -21,7 +21,7 @@ private:
 	GENERATED_BODY()
 
 	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category = "Search", meta = ( AllowPrivateAccess = "true" ) )
-	bool bSearchRandom = false;
+	bool bSearchRandom =		false;
 	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category = "Search", meta = ( AllowPrivateAccess = "true" ) )
-	float Radius = 235.0f;
+	float Radius =				235.0f;
 };

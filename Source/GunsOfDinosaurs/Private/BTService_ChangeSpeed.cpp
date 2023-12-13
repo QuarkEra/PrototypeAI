@@ -7,6 +7,7 @@
 #include "God_Alien.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 /*
 ====================
@@ -18,7 +19,7 @@ UBTService_ChangeSpeed::UBTService_ChangeSpeed()
 	NodeName = "Change Speed";
 
 	bNotifyBecomeRelevant = true;
-	bNotifyCeaseRelevant = true;
+	bNotifyCeaseRelevant = false;
 }
 
 /*
@@ -32,13 +33,18 @@ void UBTService_ChangeSpeed::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp,
 	if (const auto * const Cont = Cast< AGod_AI_Controller >( OwnerComp.GetAIOwner() ) ) {
 		if (const auto * const Alien = Cast< AGod_Alien >( Cont->GetPawn() ) ) {
 			if ( auto const B = OwnerComp.GetBlackboardComponent() ) {
+				const float Alpha = FMath::Clamp( ( UGameplayStatics::GetWorldDeltaSeconds( GetWorld() ) / 1.0f ), 0.0f, 1.0f );
+				const float CurrentSpeed = Alien->GetCharacterMovement()->MaxWalkSpeed;
 				if (const bool bShouldChase = B->GetValueAsBool("CanSeePlayer") ) {
-					Alien->GetCharacterMovement()->MaxWalkSpeed = ChaseSpeed;
+					//Alien->GetCharacterMovement()->MaxWalkSpeed = ChaseSpeed;
+					Alien->GetCharacterMovement()->MaxWalkSpeed = FMath::Lerp( CurrentSpeed, ChaseSpeed, Alpha );
 				} else if ( !bShouldChase ) {
-					Alien->GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+					//Alien->GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+					Alien->GetCharacterMovement()->MaxWalkSpeed = FMath::Lerp( CurrentSpeed, WalkSpeed, Alpha );
 				}
 				if ( const bool bDistract = B->GetValueAsBool( "DistractionActive" ) ) {
-					Alien->GetCharacterMovement()->MaxWalkSpeed = DistractionSpeed;
+					//Alien->GetCharacterMovement()->MaxWalkSpeed = DistractionSpeed;
+					Alien->GetCharacterMovement()->MaxWalkSpeed = FMath::Lerp( CurrentSpeed, DistractionSpeed, Alpha );
 				}
 			}
 		}

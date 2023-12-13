@@ -22,14 +22,14 @@ class GUNSOFDINOSAURS_API AMonsterCharacter : public ACharacter
 	
 public:
 	// Sets default values for this character's properties
+	UPROPERTY(EditDefaultsOnly, Category=AiMonster)
+	bool bEnableFlickeringLights;
+	
 	AMonsterCharacter();
 	void MonsterScream() const;
 	void MonsterHostileScream() const;
-	UPROPERTY(EditDefaultsOnly, Category=AiMonster)
-	bool bEnableFlickeringLights;
 	float GetSafestFlameDistance();
 
-	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -39,24 +39,25 @@ protected:
 	void HandleDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 	
 	UPROPERTY(EditAnywhere, Category = AiMonster)
-	float LongRangeSight;
+	float						LongRangeSight;
 	UPROPERTY(EditAnywhere, Category = AiMonster)
-	float LongRangeFieldOfView;
+	float						LongRangeFieldOfView;
 	UPROPERTY(EditAnywhere, Category = AiMonster)
-	float HearingRange;
+	float						HearingRange;
 	UPROPERTY(EditAnywhere, Category = AiMonster)
-	float HearingRangeLineOfSight;
+	float						HearingRangeLineOfSight;
 	UPROPERTY(EditAnywhere, Category = AiMonster)
-	float SafestFlameDistance;
+	float						SafestFlameDistance;
+	UPROPERTY(EditAnywhere, Category = AiMonster)
+	double						FlickerRadius;
 	
 	UPROPERTY(EditAnywhere)
-	UPawnSensingComponent* PawnSensingComponent;
+	UPawnSensingComponent*		PawnSensingComponent;
 	UPROPERTY(EditDefaultsOnly, Category="Audio")
-	USoundCue* Scream;
+	USoundCue*					Scream;
 	UPROPERTY(EditDefaultsOnly, Category="Audio")
-	USoundCue* HostileScream;
+	USoundCue*					HostileScream;
 	UPROPERTY(VisibleAnywhere)
-	TArray<AActor*> FoundFlickeringLights;
-	UPROPERTY(EditAnywhere, Category = AiMonster)
-	double FlickerRadius;
+	TArray<AActor*>				FoundFlickeringLights;
+
 };

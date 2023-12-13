@@ -6,6 +6,7 @@
 #include "GodCharacter.h"
 #include "God_Alien.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Hearing.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -18,6 +19,51 @@ AGod_AI_Controller::AGod_AI_Controller
 AGod_AI_Controller::AGod_AI_Controller( FObjectInitializer const& ObjectInitializer )
 {
 	SetupPerceptionSystem();
+}
+
+/*
+====================
+AGod_AI_Controller::UpdateSpeed
+====================
+*/
+void AGod_AI_Controller::UpdateSpeed(float NewSpeed) {
+	if ( auto * const MyPawn = Cast< AGod_Alien >(GetPawn() ) ) {
+		if ( auto * MC = MyPawn->GetCharacterMovement() ) {
+			//const float Alpha = FMath::Clamp(  GetWorld()->DeltaTimeSeconds, 0.0f, 1.0f );
+			//const float CurrentSpeed = MC->MaxWalkSpeed;
+			//MC->MaxWalkSpeed = FMath::Lerp( CurrentSpeed, NewSpeed, Alpha );
+
+			float StartSpeed = MC->MaxWalkSpeed;
+
+			/*
+			 * The following Lambda was used with [=]() which gave a compiler error for C++20
+			 * Upon being told of this JetBrains AI Assistant provided the corrected format, wow
+			 */
+			// Initialize the timer
+			FTimerDelegate TimerDel;
+			TimerDel.BindLambda([this, StartSpeed, NewSpeed, SpeedIncreaseTime = 0.5f, MC]()
+			{
+				// Calculate elapsed time and alpha
+				float ElapsedTime = GetWorld()->GetTimeSeconds() - StartTime;
+				float Alpha = FMath::Clamp(ElapsedTime / SpeedIncreaseTime, 0.f, 1.f);
+
+				// Interpolate the speed using Lerp
+				float FinalSpeed = FMath::Lerp(StartSpeed, NewSpeed, Alpha);
+				MC->MaxWalkSpeed = FinalSpeed;
+
+				// Stop the timer when reached the target
+				if (Alpha >= 1.f)
+				{
+					GetWorldTimerManager().ClearTimer(SpeedIncreaseTimerHandle);
+				}
+			});
+
+			// Store the start time and start the timer
+			StartTime = GetWorld()->GetTimeSeconds();
+			GetWorldTimerManager().SetTimer(SpeedIncreaseTimerHandle, TimerDel, 0.01f, true);
+		}
+	}
+	
 }
 
 /*
@@ -50,7 +96,6 @@ void AGod_AI_Controller::OnPossess( APawn* InPawn )
 			RunBehaviorTree( Tree );
 		}
 	}
-
 }
 
 /*
@@ -110,7 +155,11 @@ AGod_AI_Controller::OnTargetDetected
 ====================
 */
 void AGod_AI_Controller::OnTargetDetected( AActor* Actor, FAIStimulus const Stimulus ) {
-	bool const bIsPlayer =  Cast< AGodCharacter >( Actor )->IsPlayerControlled();
+	bool bIsPlayer = false;
+	if ( auto * const StimActor = Cast< AGodCharacter >( Actor ) ) {
+		bIsPlayer = StimActor->IsPlayerControlled();
+	}
+	
 	if ( bIsPlayer && Stimulus.Type.Name == "Default__AISense_Sight") {
 		GetBlackboardComponent()->SetValueAsBool( "CanSeePlayer", Stimulus.WasSuccessfullySensed() );		
 	}
@@ -120,4 +169,3 @@ void AGod_AI_Controller::OnTargetDetected( AActor* Actor, FAIStimulus const Stim
 		GetBlackboardComponent()->SetValueAsBool( "DistractionActive", Stimulus.WasSuccessfullySensed() );
 	}
 }
-

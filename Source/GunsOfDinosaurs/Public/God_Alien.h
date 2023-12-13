@@ -19,14 +19,12 @@ public:
 	AGod_Alien();
 	virtual void Tick( float DeltaTime ) override;
 	virtual void SetupPlayerInputComponent( class UInputComponent* PlayerInputComponent ) override;
-	float GetChaseSpeed() const;
-    float GetWalkSpeed() const;
 	
 private:
 	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category="AI", meta=( AllowPrivateAccess="true" ) )
-	UBehaviorTree* Tree;
+	UBehaviorTree*			Tree;
 	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category="AI", meta=( AllowPrivateAccess="true" ) )
-	AGod_PatrolPath* PatrolPath;
+	AGod_PatrolPath*		PatrolPath;
 	
 	virtual void BeginPlay() override;
 
