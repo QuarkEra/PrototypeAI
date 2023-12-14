@@ -29,36 +29,25 @@ AGod_AI_Controller::UpdateSpeed
 void AGod_AI_Controller::UpdateSpeed(float NewSpeed) {
 	if ( auto * const MyPawn = Cast< AGod_Alien >(GetPawn() ) ) {
 		if ( auto * MC = MyPawn->GetCharacterMovement() ) {
-			//const float Alpha = FMath::Clamp(  GetWorld()->DeltaTimeSeconds, 0.0f, 1.0f );
-			//const float CurrentSpeed = MC->MaxWalkSpeed;
-			//MC->MaxWalkSpeed = FMath::Lerp( CurrentSpeed, NewSpeed, Alpha );
-
 			float StartSpeed = MC->MaxWalkSpeed;
 
 			/*
 			 * The following Lambda was used with [=]() which gave a compiler error for C++20
 			 * Upon being told of this JetBrains AI Assistant provided the corrected format, wow
 			 */
-			// Initialize the timer
 			FTimerDelegate TimerDel;
 			TimerDel.BindLambda([this, StartSpeed, NewSpeed, SpeedIncreaseTime = 0.5f, MC]()
 			{
-				// Calculate elapsed time and alpha
 				float ElapsedTime = GetWorld()->GetTimeSeconds() - StartTime;
 				float Alpha = FMath::Clamp(ElapsedTime / SpeedIncreaseTime, 0.f, 1.f);
-
-				// Interpolate the speed using Lerp
 				float FinalSpeed = FMath::Lerp(StartSpeed, NewSpeed, Alpha);
 				MC->MaxWalkSpeed = FinalSpeed;
-
-				// Stop the timer when reached the target
 				if (Alpha >= 1.f)
 				{
 					GetWorldTimerManager().ClearTimer(SpeedIncreaseTimerHandle);
 				}
 			});
-
-			// Store the start time and start the timer
+			
 			StartTime = GetWorld()->GetTimeSeconds();
 			GetWorldTimerManager().SetTimer(SpeedIncreaseTimerHandle, TimerDel, 0.01f, true);
 		}
@@ -105,8 +94,8 @@ AGod_AI_Controller::SetupSightConfig
 */
 void AGod_AI_Controller::SetupSightConfig() {
 	SetPerceptionComponent( *CreateDefaultSubobject< UAIPerceptionComponent >( TEXT ( "Perception Component" ) ) );
-	SightConfig->SightRadius = 500.0f;
-	SightConfig->LoseSightRadius = SightConfig->SightRadius + 50.0f;
+	SightConfig->SightRadius = 1500.0f;
+	SightConfig->LoseSightRadius = SightConfig->SightRadius + 225.0f;
 	SightConfig->PeripheralVisionAngleDegrees = 90.0f;
 	SightConfig->SetMaxAge( 5.0f );
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
@@ -124,7 +113,7 @@ AGod_AI_Controller::SetupHearingConfig
 ====================
 */
 void AGod_AI_Controller::SetupHearingConfig() {
-	HearingConfig->HearingRange = 1500.0f;
+	HearingConfig->HearingRange = 2000.0f;
 	HearingConfig->SetMaxAge( 5.0f );
 	HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
 	HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
