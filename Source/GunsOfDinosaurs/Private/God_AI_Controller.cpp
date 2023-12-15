@@ -57,6 +57,17 @@ void AGod_AI_Controller::UpdateSpeed(float NewSpeed) {
 
 /*
 ====================
+AGod_AI_Controller::ReceiveNewDirector
+====================
+*/
+void AGod_AI_Controller::ReceiveNewDirector( ADirector* NewDirector ) {
+	if ( ensure( NewDirector != nullptr ) ) {
+		this->MyDirector = NewDirector;
+	}
+}
+
+/*
+====================
 AGod_AI_Controller::BeginPlay
 ====================
 */

@@ -24,10 +24,10 @@ class GUNSOFDINOSAURS_API AGodCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, Category=Monster)
-	float										LOSToMonsterMgMultiplier;
-	UPROPERTY(EditAnywhere, Category=Monster, meta=(ClampMin=0, ClampMax=10))
-	double										DistToMonsterMgMultiplier;
+	UPROPERTY(EditAnywhere, Category=Alien)
+	float										LOSMultiplier;
+	UPROPERTY(EditAnywhere, Category=Alien, meta=(ClampMin=0, ClampMax=10))
+	double										DistanceToAlien;
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Weapon")
 	AGodWeapon*									CurrentWeapon;   	
 
@@ -38,11 +38,9 @@ public:
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; };
 	void CharacterCaught(const FVector& CatcherLocation);
 
-
 protected:
 	bool										bCaught;
 	FVector										FaceDeath;
-	
 	UPROPERTY()
 	ADirector*									MyDirector;
 	UPROPERTY(BlueprintReadOnly, Category=Components)
@@ -51,8 +49,8 @@ protected:
 	USkeletalMeshComponent*						Mesh1P;
 	UPROPERTY()
 	UPawnSensingComponent*						SensingComponent;
-	UPROPERTY(EditDefaultsOnly,Category=Monster)
-	AActor*										MonsterActor;
+	UPROPERTY(EditDefaultsOnly,Category=Alien)
+	AActor*										AlienCharacter;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputMappingContext*						InputMapping;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
@@ -66,12 +64,10 @@ protected:
 	UPROPERTY()
 	class UAIPerceptionStimuliSourceComponent*	StimulusSource;
 	
-
-	
 	virtual void BeginPlay() override;
 	void SetupStimulusSource();
-	void Move(const FInputActionInstance& Instance);
-	void Look(const FInputActionValue& Value);
+	void Move( const FInputActionInstance& Instance );
+	void Look( const FInputActionValue& Value );
 	UFUNCTION(BlueprintCallable)
 	void ShootWeapon();
 	void StopShootWeapon();

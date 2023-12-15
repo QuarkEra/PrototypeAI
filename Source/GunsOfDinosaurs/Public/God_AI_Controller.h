@@ -11,6 +11,8 @@
  * 
  */
 
+class ADirector;
+
 UCLASS()
 class GUNSOFDINOSAURS_API AGod_AI_Controller : public AAIController
 {
@@ -19,6 +21,7 @@ class GUNSOFDINOSAURS_API AGod_AI_Controller : public AAIController
 public:
 	explicit AGod_AI_Controller( FObjectInitializer const& ObjectInitializer );
 	void UpdateSpeed( float NewSpeed );
+	void ReceiveNewDirector( ADirector* NewDirector );
 	
 protected:
 	virtual void BeginPlay() override;
@@ -27,6 +30,8 @@ protected:
 	void SetupHearingConfig();
 
 private:
+	UPROPERTY()
+	ADirector* MyDirector;
 	FTimerHandle						SpeedIncreaseTimerHandle;
 	float								StartTime;
 	UPROPERTY()

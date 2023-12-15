@@ -33,8 +33,8 @@ AGodCharacter::AGodCharacter()
 		SensingComponent->SetPeripheralVisionAngle(25);
 	}
 	
-	LOSToMonsterMgMultiplier = 0.1;
-	DistToMonsterMgMultiplier = 1;
+	LOSMultiplier = 0.1;
+	DistanceToAlien = 1;
 	
 	SetInstigator(this);
 	SetupStimulusSource();
@@ -54,9 +54,9 @@ void AGodCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (MyDirector->GiveMonsterActor() != nullptr)
+	if (MyDirector->GivePlayerAlien() != nullptr)
 	{
-		MonsterActor = MyDirector->GiveMonsterActor();
+		AlienCharacter = MyDirector->GivePlayerAlien();
 	}
 }
 
@@ -149,6 +149,7 @@ void AGodCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// @TODO: obviously take out of tick and use timer to handle smooth lerp 
 	if (bCaught)
 	{
 		FRotator NewRot = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), FaceDeath);
@@ -176,20 +177,21 @@ void AGodCharacter::Tick(float DeltaTime)
 	// check for line of sight from player to monster
 	if (ensure(SensingComponent != nullptr))
 	{
-		const float DistToMonster = GetHorizontalDistanceTo(MonsterActor);
-		if (DistToMonster < 1000)
+		const float Distance = GetHorizontalDistanceTo(AlienCharacter);
+		if (Distance < 1000)
 		{
-			double Multiplier = DistToMonsterMgMultiplier;
-			Multiplier = FMath::GetMappedRangeValueClamped(FVector2d(1000, 0), FVector2d(0, Multiplier), DistToMonster);
-			Multiplier = FMath::Clamp(Multiplier, 0, DistToMonsterMgMultiplier);
+			double Multiplier = DistanceToAlien;
+			Multiplier = FMath::GetMappedRangeValueClamped(FVector2d(1000, 0), FVector2d(0, Multiplier), Distance);
+			Multiplier = FMath::Clamp(Multiplier, 0, DistanceToAlien);
 			MyDirector->ChangeMenaceGauge(Multiplier * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()));
 			UE_LOG(LogTemp, Display, TEXT("Multiplier %f"), Multiplier);
 		}
-		if (SensingComponent->HasLineOfSightTo(MonsterActor))
+		if (SensingComponent->HasLineOfSightTo(AlienCharacter))
 		{
-			MyDirector->ChangeMenaceGauge(LOSToMonsterMgMultiplier * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()));
+			MyDirector->ChangeMenaceGauge(LOSMultiplier * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()));
 		}
 	}
+	//@TODO: Update the noise making for AI Sense Perception
 	// check for speed and make noise
 	if (const float Speed = UKismetMathLibrary::VSize(GetCharacterMovement()->Velocity); Speed > 300)
 	{

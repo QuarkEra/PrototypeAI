@@ -3,15 +3,15 @@
 
 #include "Director.h"
 
-#include "AI_MonsterController.h"
 #include "GodCharacter.h"
-#include "MonsterCharacter.h"
+#include "God_AI_Controller.h"
+#include "God_Alien.h"
 #include "NavigationSystem.h"
 #include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
-ADirector::ADirector(): PlayerCharacter(nullptr), MonsterCharacter(nullptr), MonsterAI(nullptr), NavSys(nullptr),
+ADirector::ADirector(): PlayerCharacter(nullptr), AlienCharacter(nullptr), AlienAI(nullptr), NavSys(nullptr),
                         MenaceGauge(0)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -29,23 +29,20 @@ void ADirector::BeginPlay()
 {
 	Super::BeginPlay();
 
-	MonsterAI = Cast<AAI_MonsterController>(MonsterCharacter->GetController());
-	if (ensure(MonsterAI))
-	{
-		MonsterAI->ReceiveNewDirector(this);
+	if ( auto * const AlienCont = Cast< AGod_AI_Controller >( AlienCharacter->GetController() ) ) {
+		AlienAI = AlienCont;
 	}
-	PlayerCharacter = Cast<AGodCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	if (ensure(PlayerCharacter))
+	if ( ensure( AlienAI ) )
+	{
+		AlienAI->ReceiveNewDirector( this );
+	}
+	PlayerCharacter = Cast< AGodCharacter >( UGameplayStatics::GetPlayerCharacter( GetWorld(), 0 ) );
+	if ( ensure( PlayerCharacter ) )
 	{
 		PlayerCharacter->ReceiveNewDirector(this);
 	}
 
 	NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
-}
-
-float ADirector::CheckMenaceGauge() const
-{
-	return MenaceGauge;
 }
 
 void ADirector::GiveNewTask()
@@ -55,34 +52,33 @@ void ADirector::GiveNewTask()
 		BackOff();
 	}
 	else if (MenaceGauge <= 99)
-	{
-		switch (MonsterAI->GetCurrentState())
+	{/*
+		switch (AlienAI->GetCurrentState())
 		{
 		case EMonsterState::Wandering_Out_Of_Vent:
-			MonsterAI->LookAround();
+			AlienAI->LookAround();
 			break;
 		case EMonsterState::Wandering_In_Vent:
-			MonsterAI->WanderVents();
+			AlienAI->WanderVents();
 			break;
 		default:
-			if (MonsterAI->bInVent)
+			if (AlienAI->bInVent)
 			{
-				MonsterAI->WanderVents();
+				AlienAI->WanderVents();
 			}
 			else
 			{
-				MonsterAI->LookAround();
+				AlienAI->LookAround();
 			}
-			break;
+			break;	
 		}
-	}
+	*/}
 }
 
-ADirector::Super* ADirector::GiveMonsterActor()
-{
-	if (MonsterCharacter != nullptr)
+ADirector::Super* ADirector::GivePlayerAlien() const {
+	if (AlienCharacter != nullptr)
 	{
-		return Cast<AActor>(MonsterCharacter);
+		return Cast<AActor>(AlienCharacter);
 	}
 	return nullptr;
 }
@@ -90,7 +86,7 @@ ADirector::Super* ADirector::GiveMonsterActor()
 void ADirector::BackOff()
 {
 	this->MenaceGauge = 0.f;
-	MonsterAI->SetNewState(EMonsterState::Idle, nullptr);
+	// MonsterAI->SetNewState(EMonsterState::Idle, nullptr);
 }
 	
 // Called every frame
