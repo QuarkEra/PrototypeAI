@@ -23,8 +23,8 @@ UBTTask_ChasePlayer::ExecuteTask
 ====================
 */
 EBTNodeResult::Type UBTTask_ChasePlayer::ExecuteTask( UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory ) {
-	if ( auto * const Cont = Cast< AGod_AI_Controller >( OwnerComp.GetAIOwner() ) ) {
-		FVector const PlayerLocation = OwnerComp.GetBlackboardComponent()->GetValueAsVector(GetSelectedBlackboardKey());
+	if ( AGod_AI_Controller* const Cont = Cast< AGod_AI_Controller >( OwnerComp.GetAIOwner() ) ) {
+		FVector const PlayerLocation = OwnerComp.GetBlackboardComponent()->GetValueAsVector( GetSelectedBlackboardKey() );
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation( Cont, PlayerLocation );
 		FinishLatentTask( OwnerComp, EBTNodeResult::Succeeded );
 		return EBTNodeResult::Succeeded;

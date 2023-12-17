@@ -22,23 +22,23 @@ UBTTask_FindRandomLocation::UBTTask_FindRandomLocation(FObjectInitializer const&
 UBTTask_FindRandomLocation::ExecuteTask
 ====================
 */
-EBTNodeResult::Type UBTTask_FindRandomLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_FindRandomLocation::ExecuteTask( UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory )
 {
-	if (const AGod_AI_Controller* Controller = Cast<AGod_AI_Controller>(OwnerComp.GetAIOwner()))
+	if ( const AGod_AI_Controller* Controller = Cast<AGod_AI_Controller>( OwnerComp.GetAIOwner() ) )
 	{
-		if (const auto Alien = Controller->GetPawn())
+		if ( const APawn* Alien = Controller->GetPawn())
 		{
-			const auto Origin = Alien->GetActorLocation();
+			const FVector Origin = Alien->GetActorLocation();
 
-			if (const auto* NavSys = UNavigationSystemV1::GetCurrent(GetWorld()))
+			if ( const UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent( GetWorld() ) )
 			{
 				FNavLocation Loc;
-				if (NavSys->GetRandomPointInNavigableRadius(Origin, SearchRadius, Loc))
+				if ( NavSys->GetRandomPointInNavigableRadius(Origin, SearchRadius, Loc ) )
 				{
-					OwnerComp.GetBlackboardComponent()->SetValueAsVector(GetSelectedBlackboardKey(), Loc.Location);
+					OwnerComp.GetBlackboardComponent()->SetValueAsVector( GetSelectedBlackboardKey(), Loc.Location );
 				}
 
-				FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+				FinishLatentTask( OwnerComp, EBTNodeResult::Succeeded );
 				return EBTNodeResult::Succeeded;
 			}
 		}

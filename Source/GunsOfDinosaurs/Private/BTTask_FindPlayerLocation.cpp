@@ -22,20 +22,20 @@ UBTTask_FindPlayerLocation::UBTTask_FindPlayerLocation() {
 UBTTask_FindPlayerLocation::ExecuteTask
 ====================
 */
-EBTNodeResult::Type UBTTask_FindPlayerLocation::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) {
-	if (const ACharacter* const Player = UGameplayStatics::GetPlayerCharacter( GetWorld(), 0 ) ) {
-		auto const PlayerLocation = Player->GetActorLocation();
+EBTNodeResult::Type UBTTask_FindPlayerLocation::ExecuteTask( UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) {
+	if ( const ACharacter* const Player = UGameplayStatics::GetPlayerCharacter( GetWorld(), 0 ) ) {
+		FVector const PlayerLocation = Player->GetActorLocation();
 		if ( bSearchRandom ) {
-			if (const auto* const Nav = UNavigationSystemV1::GetCurrent( GetWorld() ) ) {
-				if (FNavLocation Loc; Nav->GetRandomPointInNavigableRadius( PlayerLocation, Radius, Loc) ) {
-					OwnerComp.GetBlackboardComponent()->SetValueAsVector(GetSelectedBlackboardKey(), Loc.Location);
-					FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+			if ( const UNavigationSystemV1* const Nav = UNavigationSystemV1::GetCurrent(GetWorld() ) ) {
+				if ( FNavLocation Loc; Nav->GetRandomPointInNavigableRadius( PlayerLocation, Radius, Loc) ) {
+					OwnerComp.GetBlackboardComponent()->SetValueAsVector( GetSelectedBlackboardKey(), Loc.Location );
+					FinishLatentTask( OwnerComp, EBTNodeResult::Succeeded );
 					return EBTNodeResult::Succeeded;
 				}
 			}
 		} else {
-			OwnerComp.GetBlackboardComponent()->SetValueAsVector(GetSelectedBlackboardKey(), PlayerLocation);
-			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+			OwnerComp.GetBlackboardComponent()->SetValueAsVector( GetSelectedBlackboardKey(), PlayerLocation );
+			FinishLatentTask( OwnerComp, EBTNodeResult::Succeeded );
 			return EBTNodeResult::Succeeded;
 		}
 	}

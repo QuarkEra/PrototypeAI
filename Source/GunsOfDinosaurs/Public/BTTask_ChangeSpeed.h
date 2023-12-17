@@ -23,6 +23,6 @@ public:
 
 private:
 	UPROPERTY( EditAnywhere, BlueprintReadWrite, meta = ( AllowPrivateAccess = "true" ) )
-	float NodeSpeed =			560.0f;
+	float NodeSpeed = 560.0f;
 
 };

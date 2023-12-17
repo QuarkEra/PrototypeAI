@@ -13,10 +13,16 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
 #include "Perception/PawnSensingComponent.h"
+#include "Sound/SoundCue.h"
 
-// Sets default values
+/*
+====================
+AGodCharacter::AGodCharacter
+====================
+*/
 AGodCharacter::AGodCharacter()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -32,14 +38,23 @@ AGodCharacter::AGodCharacter()
 	{
 		SensingComponent->SetPeripheralVisionAngle(25);
 	}
+
+	CrouchSpeed		= 175;
+	WalkSpeed		= 300;
+	SprintSpeed		= 600;
 	
-	LOSMultiplier = 0.1;
+	LOSMultiplier	= 0.1;
 	DistanceToAlien = 1;
 	
 	SetInstigator(this);
 	SetupStimulusSource();
 }
 
+/*
+====================
+AGodCharacter::ReceiveNewDirector
+====================
+*/
 void AGodCharacter::ReceiveNewDirector(ADirector* NewDirector)
 {
 	if (ensure(NewDirector != nullptr))
@@ -48,8 +63,11 @@ void AGodCharacter::ReceiveNewDirector(ADirector* NewDirector)
 	}
 }
 
-
-// Called when the game starts or when spawned
+/*
+====================
+AGodCharacter::BeginPlay
+====================
+*/
 void AGodCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -58,8 +76,16 @@ void AGodCharacter::BeginPlay()
 	{
 		AlienCharacter = MyDirector->GivePlayerAlien();
 	}
+
+	GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
+/*
+====================
+AGodCharacter::SetupStimulusSource
+====================
+*/
 void AGodCharacter::SetupStimulusSource() {
 	StimulusSource = CreateDefaultSubobject< UAIPerceptionStimuliSourceComponent >( TEXT( "Stimulus ") );
 	if ( StimulusSource ) {
@@ -68,6 +94,11 @@ void AGodCharacter::SetupStimulusSource() {
 	}
 }
 
+/*
+====================
+AGodCharacter::Move
+====================
+*/
 void AGodCharacter::Move(const FInputActionInstance& Instance)
 {
 	if (Controller)
@@ -88,6 +119,11 @@ void AGodCharacter::Move(const FInputActionInstance& Instance)
 	}
 }
 
+/*
+====================
+AGodCharacter::Look
+====================
+*/
 void AGodCharacter::Look(const FInputActionValue& Value)
 {
 	if (Controller->IsLocalController() && Controller)
@@ -115,6 +151,29 @@ void AGodCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+/*
+====================
+AGodCharacter::StartSprint
+====================
+*/
+void AGodCharacter::StartSprint() {
+	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed; 
+}
+
+/*
+====================
+AGodCharacter::StopSprint
+====================
+*/
+void AGodCharacter::StopSprint() {
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed; 
+}
+
+/*
+====================
+AGodCharacter::ShootWeapon
+====================
+*/
 void AGodCharacter::ShootWeapon()
 {
 	if (CurrentWeapon != nullptr)
@@ -127,6 +186,11 @@ void AGodCharacter::ShootWeapon()
 	}
 }
 
+/*
+====================
+AGodCharacter::StopShootWeapon
+====================
+*/
 void AGodCharacter::StopShootWeapon()
 {
 	if (CurrentWeapon != nullptr)
@@ -135,6 +199,11 @@ void AGodCharacter::StopShootWeapon()
 	}
 }
 
+/*
+====================
+AGodCharacter::CycleAmmoType
+====================
+*/
 void AGodCharacter::CycleAmmoType()
 {
 	if (CurrentWeapon != nullptr)
@@ -143,63 +212,52 @@ void AGodCharacter::CycleAmmoType()
 	}
 }
 
-
-// Called every frame
-void AGodCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	// @TODO: obviously take out of tick and use timer to handle smooth lerp 
-	if (bCaught)
+/*
+====================
+AGodCharacter::LineOfSightToEnemy
+====================
+*/
+void AGodCharacter::LineOfSightToEnemy() {
+	const float Distance = GetHorizontalDistanceTo(AlienCharacter);
+	if (Distance < 1000)
 	{
-		FRotator NewRot = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), FaceDeath);
-		APlayerController* PC = Cast<APlayerController>(GetController());
-		if (PC)
-		{
-			PC->SetControlRotation(
-				FMath::RInterpTo(
-					PC->GetControlRotation(),
-					NewRot,
-					UGameplayStatics::GetWorldDeltaSeconds(GetWorld()),
-					10));
-		}
-		if (CameraComp)
-		{
-			CameraComp->SetFieldOfView(
-				FMath::FInterpTo(
-					CameraComp->FieldOfView,
-					CameraComp->FieldOfView - 5,
-					UGameplayStatics::GetWorldDeltaSeconds(GetWorld()),
-					5)
-					);
-		}
+		double Multiplier = DistanceToAlien;
+		Multiplier = FMath::GetMappedRangeValueClamped(FVector2d(1000, 0), FVector2d(0, Multiplier), Distance);
+		Multiplier = FMath::Clamp(Multiplier, 0, DistanceToAlien);
+		MyDirector->ChangeMenaceGauge(Multiplier * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()));
 	}
-	// check for line of sight from player to monster
-	if (ensure(SensingComponent != nullptr))
+	if (SensingComponent->HasLineOfSightTo(AlienCharacter))
 	{
-		const float Distance = GetHorizontalDistanceTo(AlienCharacter);
-		if (Distance < 1000)
-		{
-			double Multiplier = DistanceToAlien;
-			Multiplier = FMath::GetMappedRangeValueClamped(FVector2d(1000, 0), FVector2d(0, Multiplier), Distance);
-			Multiplier = FMath::Clamp(Multiplier, 0, DistanceToAlien);
-			MyDirector->ChangeMenaceGauge(Multiplier * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()));
-			UE_LOG(LogTemp, Display, TEXT("Multiplier %f"), Multiplier);
-		}
-		if (SensingComponent->HasLineOfSightTo(AlienCharacter))
-		{
-			MyDirector->ChangeMenaceGauge(LOSMultiplier * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()));
-		}
-	}
-	//@TODO: Update the noise making for AI Sense Perception
-	// check for speed and make noise
-	if (const float Speed = UKismetMathLibrary::VSize(GetCharacterMovement()->Velocity); Speed > 300)
-	{
-		MakeNoise(0.015, GetInstigator(), GetActorLocation(), 1000.f);
+		MyDirector->ChangeMenaceGauge(LOSMultiplier * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()));
 	}
 }
 
-// Called to bind functionality to input
+/*
+====================
+AGodCharacter::Tick
+====================
+*/
+void AGodCharacter::Tick( float DeltaTime )
+{
+	Super::Tick( DeltaTime );
+	
+	// check for line of sight from player to monster
+	if ( ensure( SensingComponent != nullptr ) ){
+		LineOfSightToEnemy();
+	}
+	if ( const float Speed = UKismetMathLibrary::VSize( GetCharacterMovement()->Velocity); Speed > WalkSpeed ) {
+		UAISense_Hearing::ReportNoiseEvent( GetWorld(), GetActorLocation(), 1, GetInstigator(), 0, FName( "Default__AISense_Hearing" ) );
+	}
+	if ( bCaught ) {
+		DeathAnimation( FaceDeath, DeltaTime );
+	}
+}
+
+/*
+====================
+AGodCharacter::SetupPlayerInputComponent
+====================
+*/
 void AGodCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -219,6 +277,8 @@ void AGodCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 					{
 						Input->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AGodCharacter::Move);
 						Input->BindAction(IA_Look, ETriggerEvent::Triggered, this, &AGodCharacter::Look);
+						Input->BindAction(IA_Sprint, ETriggerEvent::Started, this, &AGodCharacter::StartSprint);
+						Input->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &AGodCharacter::StopSprint);
 						Input->BindAction(IA_ShootWeapon, ETriggerEvent::Started, this, &AGodCharacter::ShootWeapon);
 						Input->BindAction(IA_CycleAmmoType, ETriggerEvent::Triggered, this, &AGodCharacter::CycleAmmoType);
 						Input->BindAction(IA_ShootWeapon, ETriggerEvent::Completed, this, &AGodCharacter::StopShootWeapon);
@@ -229,15 +289,35 @@ void AGodCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	}
 }
 
-void AGodCharacter::CharacterCaught(const FVector& CatcherLocation)
-{
+/*
+====================
+AGodCharacter::KillPlayer
+====================
+*/
+void AGodCharacter::KillPlayer( const FVector& CatcherLocation ) {
 	bCaught = true;
-	FaceDeath = CatcherLocation;
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		DisableInput(PC);
+	UGameplayStatics::SpawnSound2D( this, DeathSounds, 1 );
+	if ( APlayerController* PC = Cast< APlayerController >( GetController() ) ) {
+		DisableInput( PC );
+		FaceDeath = CatcherLocation;
 	}
-	
 }
 
-
+/*
+====================
+AGodCharacter::DeathAnimation
+====================
+*/
+void AGodCharacter::DeathAnimation(const FVector& CatcherLocation, float DeltaTime) {
+	const FVector y = GetActorLocation();
+	const FVector X = CatcherLocation - y;
+	const FRotator deathDirection = FRotationMatrix::MakeFromX(X).Rotator();
+	
+	APlayerController* PC = Cast<APlayerController>( GetController() );
+	if ( PC ) {
+		PC->SetControlRotation( FMath::RInterpTo( PC->GetControlRotation(), deathDirection, DeltaTime, 10 ) );
+	}
+	if ( CameraComp ) {
+		CameraComp->SetFieldOfView( FMath::FInterpTo( CameraComp->FieldOfView, DesiredFov, DeltaTime, 5 ) );
+	}
+}

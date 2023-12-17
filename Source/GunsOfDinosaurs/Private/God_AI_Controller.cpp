@@ -27,8 +27,8 @@ AGod_AI_Controller::UpdateSpeed
 ====================
 */
 void AGod_AI_Controller::UpdateSpeed(float NewSpeed) {
-	if ( auto * const MyPawn = Cast< AGod_Alien >(GetPawn() ) ) {
-		if ( auto * MC = MyPawn->GetCharacterMovement() ) {
+	if ( const AGod_Alien * const AlienPawn = Cast< AGod_Alien >(GetPawn() ) ) {
+		if ( UCharacterMovementComponent* MC = AlienPawn->GetCharacterMovement() ) {
 			float StartSpeed = MC->MaxWalkSpeed;
 
 			/*
@@ -36,23 +36,22 @@ void AGod_AI_Controller::UpdateSpeed(float NewSpeed) {
 			 * Upon being told of this JetBrains AI Assistant provided the corrected format, wow
 			 */
 			FTimerDelegate TimerDel;
-			TimerDel.BindLambda([this, StartSpeed, NewSpeed, SpeedIncreaseTime = 0.5f, MC]()
+			TimerDel.BindLambda( [ this, StartSpeed, NewSpeed, SpeedIncreaseTime = 0.5f, MC ]()
 			{
-				float ElapsedTime = GetWorld()->GetTimeSeconds() - StartTime;
-				float Alpha = FMath::Clamp(ElapsedTime / SpeedIncreaseTime, 0.f, 1.f);
-				float FinalSpeed = FMath::Lerp(StartSpeed, NewSpeed, Alpha);
+				const float ElapsedTime = GetWorld()->GetTimeSeconds() - StartTime;
+				const float Alpha = FMath::Clamp( ElapsedTime / SpeedIncreaseTime, 0.f, 1.f );
+				const float FinalSpeed = FMath::Lerp( StartSpeed, NewSpeed, Alpha );
 				MC->MaxWalkSpeed = FinalSpeed;
 				if (Alpha >= 1.f)
 				{
-					GetWorldTimerManager().ClearTimer(SpeedIncreaseTimerHandle);
+					GetWorldTimerManager().ClearTimer( SpeedIncreaseTimerHandle );
 				}
-			});
+			} );
 			
 			StartTime = GetWorld()->GetTimeSeconds();
-			GetWorldTimerManager().SetTimer(SpeedIncreaseTimerHandle, TimerDel, 0.01f, true);
+			GetWorldTimerManager().SetTimer( SpeedIncreaseTimerHandle, TimerDel, 0.01f, true );
 		}
 	}
-	
 }
 
 /*
@@ -85,6 +84,7 @@ AGod_AI_Controller::OnPossess
 void AGod_AI_Controller::OnPossess( APawn* InPawn )
 {
 	Super::OnPossess( InPawn );
+	MyPawn = Cast< AGod_Alien >( InPawn );
 
 	if ( AGod_Alien* const Alien = Cast< AGod_Alien >( InPawn ) )
 	{
@@ -155,17 +155,52 @@ AGod_AI_Controller::OnTargetDetected
 ====================
 */
 void AGod_AI_Controller::OnTargetDetected( AActor* Actor, FAIStimulus const Stimulus ) {
+	
 	bool bIsPlayer = false;
-	if ( auto * const StimActor = Cast< AGodCharacter >( Actor ) ) {
-		bIsPlayer = StimActor->IsPlayerControlled();
+	ThePlayer = Cast< AGodCharacter >( Actor );
+	if ( ThePlayer ) {
+		bIsPlayer = ThePlayer->IsPlayerControlled();
+	}
+	if ( bIsPlayer && Stimulus.Type.Name == "Default__AISense_Sight") {
+		GetBlackboardComponent()->SetValueAsBool( "CanSeePlayer", Stimulus.WasSuccessfullySensed() );
 	}
 	
-	if ( bIsPlayer && Stimulus.Type.Name == "Default__AISense_Sight") {
-		GetBlackboardComponent()->SetValueAsBool( "CanSeePlayer", Stimulus.WasSuccessfullySensed() );		
-	}
 	const FName DistractionTag = Stimulus.Tag;
 	if (  Stimulus.Tag == DistractionTag && Stimulus.Type.Name == "Default__AISense_Hearing" ) {
 		GetBlackboardComponent()->SetValueAsVector( "TargetLocation", Stimulus.StimulusLocation );
 		GetBlackboardComponent()->SetValueAsBool( "DistractionActive", Stimulus.WasSuccessfullySensed() );
+	}
+	
+}
+
+/*
+====================
+AGod_AI_Controller::InKillDistance
+====================
+*/
+float AGod_AI_Controller::InKillDistance( const AActor* KillActor ) const {
+	const FVector myLoc = MyPawn->GetActorLocation();
+	return KillActor ? ( myLoc - KillActor->GetActorLocation() ).Size() : 0.f;
+}
+
+/*
+====================
+AGod_AI_Controller::Tick
+====================
+*/
+void AGod_AI_Controller::Tick(float DeltaSeconds) {
+	Super::Tick(DeltaSeconds);
+	
+	if ( MyPawn != nullptr ) {
+		float Dist = InKillDistance( ThePlayer );
+		if ( Dist <= 120.0f  && Dist > 0 && bPlayerKilled == false) {
+			StopMovement();
+			MyPawn->PlayEatingSound();
+			GetBlackboardComponent()->SetValueAsBool( "bPlayerKilled", true );
+			bPlayerKilled = true;
+			if ( ThePlayer != nullptr) {
+				ThePlayer->KillPlayer( MyPawn->GetActorLocation() );
+			}
+		}
 	}
 }

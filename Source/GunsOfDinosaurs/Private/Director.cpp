@@ -11,8 +11,8 @@
 
 
 // Sets default values
-ADirector::ADirector(): PlayerCharacter(nullptr), AlienCharacter(nullptr), AlienAI(nullptr), NavSys(nullptr),
-                        MenaceGauge(0)
+ADirector::ADirector(): MenaceGauge(0), PlayerCharacter(nullptr), AlienCharacter(nullptr), AlienAI(nullptr),
+                        NavSys(nullptr)
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -29,7 +29,7 @@ void ADirector::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if ( auto * const AlienCont = Cast< AGod_AI_Controller >( AlienCharacter->GetController() ) ) {
+	if ( AGod_AI_Controller * const AlienCont = Cast< AGod_AI_Controller >( AlienCharacter->GetController() ) ) {
 		AlienAI = AlienCont;
 	}
 	if ( ensure( AlienAI ) )

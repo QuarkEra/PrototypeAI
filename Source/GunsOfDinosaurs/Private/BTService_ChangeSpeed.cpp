@@ -30,12 +30,12 @@ UBTService_ChangeSpeed::OnBecomeRelevant
 void UBTService_ChangeSpeed::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) {
 	Super::OnBecomeRelevant(OwnerComp, NodeMemory);
 	
-	if (const auto * const Cont = Cast< AGod_AI_Controller >( OwnerComp.GetAIOwner() ) ) {
-		if (const auto * const Alien = Cast< AGod_Alien >( Cont->GetPawn() ) ) {
-			if ( auto const B = OwnerComp.GetBlackboardComponent() ) {
+	if ( const AGod_AI_Controller* const Cont = Cast< AGod_AI_Controller >( OwnerComp.GetAIOwner() ) ) {
+		if ( const AGod_Alien* const Alien = Cast< AGod_Alien >( Cont->GetPawn() ) ) {
+			if ( UBlackboardComponent const* B = OwnerComp.GetBlackboardComponent() ) {
 				const float Alpha = FMath::Clamp( ( UGameplayStatics::GetWorldDeltaSeconds( GetWorld() ) / 1.0f ), 0.0f, 1.0f );
 				const float CurrentSpeed = Alien->GetCharacterMovement()->MaxWalkSpeed;
-				if (const bool bShouldChase = B->GetValueAsBool("CanSeePlayer") ) {
+				if ( const bool bShouldChase = B->GetValueAsBool( "CanSeePlayer") ) {
 					//Alien->GetCharacterMovement()->MaxWalkSpeed = ChaseSpeed;
 					Alien->GetCharacterMovement()->MaxWalkSpeed = FMath::Lerp( CurrentSpeed, ChaseSpeed, Alpha );
 				} else if ( !bShouldChase ) {

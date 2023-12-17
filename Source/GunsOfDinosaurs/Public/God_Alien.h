@@ -17,10 +17,13 @@ public:
 	UBehaviorTree* GetBehaviourTree();
 	AGod_PatrolPath* GetPatrolPath() const;
 	AGod_Alien();
+	void PlayEatingSound();
 	virtual void Tick( float DeltaTime ) override;
 	virtual void SetupPlayerInputComponent( class UInputComponent* PlayerInputComponent ) override;
 	
 private:
+	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category="AI", meta=( AllowPrivateAccess="true" ) )
+	USoundCue*				EatingSound;
 	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category="AI", meta=( AllowPrivateAccess="true" ) )
 	UBehaviorTree*			Tree;
 	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category="AI", meta=( AllowPrivateAccess="true" ) )

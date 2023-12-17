@@ -3,6 +3,9 @@
 
 #include "God_Alien.h"
 
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+
 /*
 ====================
 AGod_Alien::AGod_Alien
@@ -12,6 +15,10 @@ AGod_Alien::AGod_Alien(): Tree(nullptr), PatrolPath(nullptr) {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
+}
+
+void AGod_Alien::PlayEatingSound() {
+	UGameplayStatics::SpawnSound2D( this, EatingSound, 1 );
 }
 
 /*

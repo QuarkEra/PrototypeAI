@@ -24,6 +24,7 @@ class GUNSOFDINOSAURS_API AGodCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
+	bool										bCaught;
 	UPROPERTY(EditAnywhere, Category=Alien)
 	float										LOSMultiplier;
 	UPROPERTY(EditAnywhere, Category=Alien, meta=(ClampMin=0, ClampMax=10))
@@ -36,11 +37,21 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; };
-	void CharacterCaught(const FVector& CatcherLocation);
+	void KillPlayer(const FVector& CatcherLocation);
 
 protected:
-	bool										bCaught;
+	float										StartTime;
+	FTimerHandle								TimerDeathTimerHandle;
 	FVector										FaceDeath;
+	float DesiredFov							= 35;
+	UPROPERTY( EditAnywhere, BlueprintReadWrite, Category="Audio", meta=( AllowPrivateAccess="true" ) )
+	USoundCue*									DeathSounds;
+	UPROPERTY(EditAnywhere, Category="Input")
+	float										WalkSpeed;
+	UPROPERTY(EditAnywhere, Category="Input")
+	float										SprintSpeed;
+	UPROPERTY(EditAnywhere, Category="Input")
+	float										CrouchSpeed;
 	UPROPERTY()
 	ADirector*									MyDirector;
 	UPROPERTY(BlueprintReadOnly, Category=Components)
@@ -58,6 +69,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputAction*								IA_Look;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UInputAction*								IA_Sprint;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputAction*								IA_ShootWeapon;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputAction*								IA_CycleAmmoType;
@@ -68,9 +81,12 @@ protected:
 	void SetupStimulusSource();
 	void Move( const FInputActionInstance& Instance );
 	void Look( const FInputActionValue& Value );
+	void StartSprint();
+	void StopSprint();
 	UFUNCTION(BlueprintCallable)
 	void ShootWeapon();
 	void StopShootWeapon();
 	void CycleAmmoType();
-
+	void LineOfSightToEnemy();
+	void DeathAnimation(const FVector& CatcherLocation, float DeltaTime);
 };

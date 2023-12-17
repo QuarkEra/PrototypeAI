@@ -11,6 +11,8 @@
  * 
  */
 
+class AGod_Alien;
+class AGodCharacter;
 class ADirector;
 
 UCLASS()
@@ -30,16 +32,23 @@ protected:
 	void SetupHearingConfig();
 
 private:
+	bool								bPlayerKilled;
 	UPROPERTY()
-	ADirector* MyDirector;
+	ADirector*							MyDirector;
 	FTimerHandle						SpeedIncreaseTimerHandle;
 	float								StartTime;
 	UPROPERTY()
 	class UAISenseConfig_Sight*			SightConfig;
 	UPROPERTY()
 	class UAISenseConfig_Hearing*		HearingConfig;
+	UPROPERTY()
+	AGodCharacter *						ThePlayer;
+	UPROPERTY()
+	AGod_Alien*							MyPawn;
 	
 	void SetupPerceptionSystem();
 	UFUNCTION()
 	void OnTargetDetected( AActor* Actor, FAIStimulus const Stimulus );
+	float InKillDistance(const AActor* KillActor) const;
+	void Tick(float DeltaSeconds) override;
 };
