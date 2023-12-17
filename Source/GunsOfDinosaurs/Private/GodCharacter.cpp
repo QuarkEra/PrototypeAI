@@ -241,7 +241,6 @@ void AGodCharacter::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
 	
-	// check for line of sight from player to monster
 	if ( ensure( SensingComponent != nullptr ) ){
 		LineOfSightToEnemy();
 	}

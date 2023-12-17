@@ -84,8 +84,8 @@ AGod_AI_Controller::OnPossess
 void AGod_AI_Controller::OnPossess( APawn* InPawn )
 {
 	Super::OnPossess( InPawn );
+	
 	MyPawn = Cast< AGod_Alien >( InPawn );
-
 	if ( AGod_Alien* const Alien = Cast< AGod_Alien >( InPawn ) )
 	{
 		if ( UBehaviorTree* const Tree = Alien->GetBehaviourTree() )
