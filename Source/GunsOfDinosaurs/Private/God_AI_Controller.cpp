@@ -199,6 +199,7 @@ void AGod_AI_Controller::Tick(float DeltaSeconds) {
 			GetBlackboardComponent()->SetValueAsBool( "bPlayerKilled", true );
 			bPlayerKilled = true;
 			if ( ThePlayer != nullptr) {
+				StopMovement();
 				ThePlayer->KillPlayer( MyPawn->GetActorLocation() );
 			}
 		}
