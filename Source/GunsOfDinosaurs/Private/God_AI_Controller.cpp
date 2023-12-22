@@ -193,7 +193,7 @@ void AGod_AI_Controller::Tick(float DeltaSeconds) {
 	
 	if ( MyPawn != nullptr ) {
 		float Dist = InKillDistance( ThePlayer );
-		if ( Dist <= 120.0f  && Dist > 0 && bPlayerKilled == false) {
+		if ( Dist <= 100.0f  && Dist > 0 && bPlayerKilled == false) {
 			StopMovement();
 			MyPawn->PlayEatingSound();
 			GetBlackboardComponent()->SetValueAsBool( "bPlayerKilled", true );
