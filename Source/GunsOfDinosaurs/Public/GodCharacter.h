@@ -71,6 +71,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputAction*								IA_Sprint;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
+	UInputAction*								IA_Hold;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputAction*								IA_ShootWeapon;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputAction*								IA_CycleAmmoType;
