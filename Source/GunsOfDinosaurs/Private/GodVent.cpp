@@ -6,6 +6,7 @@
 #include "AI_MonsterController.h"
 #include "MonsterCharacter.h"
 #include "Components/BoxComponent.h"
+#include "Net/Core/Trace/NetTrace.h"
 #include "Perception/PawnSensingComponent.h"
 
 // Sets default values
@@ -44,14 +45,15 @@ void AGodVent::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Other
 			AAI_MonsterController* MonsterController = Cast<AAI_MonsterController>(Monster->GetController());
 			if (MonsterController)
 			{
-				if (!MonsterController->IsWantsToHunt() && MonsterController->IsWantsToVent())
+				if (!MonsterController->IsWantsToHunt() && MonsterController->IsWantsToVent() && !MonsterController->bInVent)
 				{
 					MonsterController->EnterVent();
 					bOverlapped = true;
 				}
-				if (MonsterController->IsWantsToHunt() && MonsterController->IsWantsToVent())
+				if (MonsterController->IsWantsToHunt() && MonsterController->IsWantsToVent() && MonsterController->bInVent)
 				{
 					MonsterController->ExitVent();
+					MonsterController->SetNextState();
 					bOverlapped = false;
 				}
 			}	

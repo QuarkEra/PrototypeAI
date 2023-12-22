@@ -10,6 +10,7 @@ UGodGameInstance::UGodGameInstance()
 	PistolAmmo = 8;
 	ShotgunPrimaryAmmo = 2;
 	ShotgunSecondaryAmmo = 0;
+	FlamethrowerAmmo = 50;
 }
 
 int UGodGameInstance::GetAmmo(EWeaponClass WeaponClass, EAmmoType AmmoType) const
@@ -30,7 +31,9 @@ int UGodGameInstance::GetAmmo(EWeaponClass WeaponClass, EAmmoType AmmoType) cons
 		default:
 			break;
 		}
-		
+	case EWeaponClass::Flame:
+		return FlamethrowerAmmo;
+		break;
 	default:
 		return 0;
 	}
@@ -58,6 +61,9 @@ void UGodGameInstance::AddAmmo(EWeaponClass WeaponClass, int AmmoCount, EAmmoTyp
 				break;
 		}
 		break;
+	case EWeaponClass::Flame:
+		FlamethrowerAmmo += AmmoCount;;
+		break;
 	case EWeaponClass::Bow:
 		break;
 	default:
@@ -81,6 +87,9 @@ void UGodGameInstance::UseAmmo(EWeaponClass WeaponClass, EAmmoType AmmoType)
 		{
 			ShotgunSecondaryAmmo--;
 		}
+	case EWeaponClass::Flame:
+		FlamethrowerAmmo--;
+		break;
 	default:
 		break;
 	}

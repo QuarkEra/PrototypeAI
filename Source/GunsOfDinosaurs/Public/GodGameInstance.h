@@ -23,6 +23,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	int ShotgunPrimaryAmmo;
 	int ShotgunSecondaryAmmo;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	int FlamethrowerAmmo;
 
 public:
 	int GetAmmo(EWeaponClass WeaponClass, EAmmoType AmmoType) const;
@@ -30,5 +32,4 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddAmmo(EWeaponClass WeaponClass, int AmmoCount, EAmmoType AmmoType);
 	void UseAmmo(EWeaponClass WeaponClass, EAmmoType AmmoType);
-	
 };

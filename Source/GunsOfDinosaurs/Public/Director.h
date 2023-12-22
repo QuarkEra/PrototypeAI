@@ -6,7 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "Director.generated.h"
 
-class AMonsterCharacter;
+class AGod_AI_Controller;
+class AGodCharacter;
+class AGod_Alien;
 class AAI_MonsterController;
 class UNavigationSystemV1;
 
@@ -16,37 +18,29 @@ class GUNSOFDINOSAURS_API ADirector : public AActor
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
-	ADirector();
-
-	void ChangeMenaceGauge(float DeltaMenace);
-	float CheckMenaceGauge() const;
-
-	void GetNewAction();
+	UPROPERTY(VisibleAnywhere)
+	float MenaceGauge;
 	
+	ADirector();
+	void ChangeMenaceGauge(float DeltaMenace);
+	void GiveNewTask(); 
+	ADirector::Super* GivePlayerAlien() const; 
+	virtual void Tick(float DeltaTime) override;
+
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	UPROPERTY(EditInstanceOnly)
-	AMonsterCharacter* MonsterCharacter;
 	UPROPERTY()
-	AAI_MonsterController* MonsterAI;
-
+	AGodCharacter* PlayerCharacter;
+	UPROPERTY(EditAnywhere) // Alien Character must be set in editor
+	AGod_Alien* AlienCharacter;
+	UPROPERTY()
+	AGod_AI_Controller* AlienAI;
 	UPROPERTY()
 	UNavigationSystemV1* NavSys;
 
-private:
-	UPROPERTY(VisibleAnywhere)
-	float MenaceGauge;
-	void GiveNewTask();
-	void BackOff();
-	// Still undecided on how much control to give Director this early in introduction
-	//FNavLocation GetRandomPointsAroundPlayer(APawn* PlayerPawn);
-
+	virtual void BeginPlay() override;
 	
+private:
+	FNavLocation TempLocation;
 
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	void BackOff();
 };

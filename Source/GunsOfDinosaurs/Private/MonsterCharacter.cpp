@@ -19,16 +19,26 @@ AMonsterCharacter::AMonsterCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
+	
+	LongRangeSight = 1250.f;
+	LongRangeFieldOfView = 65.f;
+	HearingRange = 40000;
+	HearingRangeLineOfSight = 50000;
 
 	PawnSensingComponent->bOnlySensePlayers = true;
-	PawnSensingComponent->SightRadius = 1500;
-	PawnSensingComponent->SetPeripheralVisionAngle(65.f);
-	PawnSensingComponent->HearingThreshold = 40000;
-	PawnSensingComponent->LOSHearingThreshold = 50000;
+	PawnSensingComponent->SightRadius = LongRangeSight;
+	PawnSensingComponent->SetPeripheralVisionAngle(LongRangeFieldOfView);
+	PawnSensingComponent->HearingThreshold = HearingRange;
+	PawnSensingComponent->LOSHearingThreshold = HearingRangeLineOfSight;
 	FlickerRadius = 1500;
 
-	//PawnSensingComponent->SetSensingUpdatesEnabled(false);
+	SafestFlameDistance = 800;
 	
+}
+
+float AMonsterCharacter::GetSafestFlameDistance()
+{
+	return this->SafestFlameDistance;
 }
 
 // Called when the game starts or when spawned
@@ -37,7 +47,11 @@ void AMonsterCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	// This actor handles flickering lights by distance
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFlickeringLight::StaticClass(), FoundFlickeringLights);
+	if (bEnableFlickeringLights)
+	{
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AFlickeringLight::StaticClass(), FoundFlickeringLights);
+	}
+	
 	
 	Scream = LoadObject<USoundCue>(nullptr, TEXT("/Game/Audio/Monster/SC_MonsterScream.SC_MonsterScream"));
 	HostileScream = LoadObject<USoundCue>(nullptr, TEXT("/Game/Audio/BL-FREE22_Creatures_Designed_Cue.BL-FREE22_Creatures_Designed_Cue"));
@@ -69,29 +83,32 @@ void AMonsterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (FoundFlickeringLights.Num() > 0)
+	if (bEnableFlickeringLights)
 	{
-		for (AActor* Light : FoundFlickeringLights)
+		if (FoundFlickeringLights.Num() > 0)
 		{
-			if (Light != nullptr)
+			for (AActor* Light : FoundFlickeringLights)
 			{
-				FVector LightLocation = Light->GetActorLocation();
-				FVector MyLocation = GetActorLocation();
-
-				double VectorDifference = UKismetMathLibrary::Vector_Distance2D(LightLocation, MyLocation);
-				
-				AFlickeringLight* FlickeringLight = Cast<AFlickeringLight>(Light);
-			
-				if (VectorDifference <= PawnSensingComponent->SightRadius)
+				if (Light != nullptr)
 				{
-					FlickeringLight->ReceiveDistance(VectorDifference, PawnSensingComponent->SightRadius);
-					FlickeringLight->SetShouldFlicker(true);
-					//FlickeringLight->ShouldChangeIntensity = true;
-				}
-				else
-				{
-					FlickeringLight->SetShouldFlicker(false);
-					//FlickeringLight->ShouldChangeIntensity = false;
+					FVector LightLocation = Light->GetActorLocation();
+					FVector MyLocation = GetActorLocation();
+        
+					double VectorDifference = UKismetMathLibrary::Vector_Distance2D(LightLocation, MyLocation);
+        				
+					AFlickeringLight* FlickeringLight = Cast<AFlickeringLight>(Light);
+        			
+					if (VectorDifference <= PawnSensingComponent->SightRadius)
+					{
+						FlickeringLight->ReceiveDistance(VectorDifference, PawnSensingComponent->SightRadius);
+						FlickeringLight->SetShouldFlicker(true);
+						//FlickeringLight->ShouldChangeIntensity = true;
+					}
+					else
+					{
+						FlickeringLight->SetShouldFlicker(false);
+						//FlickeringLight->ShouldChangeIntensity = false;
+					}
 				}
 			}
 		}

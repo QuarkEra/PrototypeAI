@@ -4,19 +4,32 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "AI_MonsterController.generated.h"
 
+class UAISenseConfig_Hearing;
+class UAISenseConfig_Sight;
+struct FAIStimulus;
+class UAISenseConfig;
 class ADirector;
 class AGodVent;
+class AGodCharacter;
 class UNavigationSystemV1;
 class AMonsterCharacter;
 class UCharacterMovementComponent;
+class UPawnSensingComponent;
+
+
 
 UENUM()
 enum class EMonsterState : uint8
 {
 	Idle,
 	Venting, // @TODO: DELETE VENTING, was not even used prototyping
+	Wandering_Out_Of_Vent,
+	Wandering_In_Vent,
+	Hunting_Out_Of_Vent,
+	Hunting_In_Vent,
 	Searching, // new for randomly leaving a vent to search for a player in a radial FNavLocation
 	Roaming,
 	Hunting,
@@ -32,11 +45,10 @@ enum class EMonsterState : uint8
 	// searching/distracted, 
 };
 
-
-class UPawnSensingComponent;
 /**
 *
 */
+
 UCLASS()
 class GUNSOFDINOSAURS_API AAI_MonsterController : public AAIController
 {
@@ -67,10 +79,29 @@ protected:
 	UPROPERTY()
 	ADirector* MyDirector;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAIPerceptionComponent* UaiPerceptionComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAISenseConfig_Sight* SightConfig;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAISenseConfig_Hearing* HearingConfig;
+	// @TODO:	UPROPERTY(BlueprintAssignable)
+	//			FActorPerceptionForgetUpdatedDelegate OnTargetPerceptionForgotten;
+	//
+	//			for when losing view of player
+	
+	UFUNCTION(BlueprintCallable, Category = "AiMonster", meta = (AllowPrivateAccess = true))
+	void PerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	
 public:
+	AAI_MonsterController();
+
+	
+	
 	void ReceiveNewDirector(ADirector* NewDirector);
 	
-
+	bool bInVent;
+	
 protected:
 	// Timers will be replaced with a manager Actor that is placed in the scene
 
@@ -88,19 +119,9 @@ protected:
 	float OutOfVentTimer; // when leaving vent ReturnToVent/Search
 	FTimerHandle OutOfVent_TimerHandle;
 
-
-	/*
-	* Director Functions
-	*/
 	void MoveToRandomVent();
 	void ReturnToVent();
-	// DONE void CheckMenaceGuage
-	// void GiveAlienNewTask(AlienCharacter); 
-	// new monster function void RecieveNewTask Adds 
-	// activate and disable monster
-
-
-
+	
 	/*
 	* Bluprint in CharacterActor to set up modular monsters per project
 	*/
@@ -112,15 +133,10 @@ protected:
 	int MaxSearchAttempts;
 	float MySightRadius;
 	float SightDistanceMultiplier;
-	// @TODO: BP visible setup for sight hearing etc per monster
-
-
 
 	/*
 	* Character Functions
 	*/
-
-	// @TODO: Update MenaceGauge on pawn interactions including player lineofsight
 	UFUNCTION()
 	void OnPawnSeen(APawn* PawnSeen);
 	UFUNCTION()
@@ -137,35 +153,34 @@ protected:
 	AGodVent* GetNearestVentToHideIn();
 	FNavLocation HuntAroundPlayerLocation();
 
+	void KillPlayer();
+	bool PlayerCaught;
+	FTimerHandle TH_ShortDelay_TimerHandle;
+	void RestartLevel();
 
 	/*
 	* MonsterAI stuff that can remain post refactor
 	*/
-
 	FVector LastKnownPlayerLocation;
 	FVector SeenPlayerLocation;
 	FVector NoiseHeardLocation;
-	// @TODO: no longer needed in instance
-	UPROPERTY(VisibleInstanceOnly)
 	float TimePawnSeen;
-	UPROPERTY(VisibleInstanceOnly)
-	bool bSeenPlayer;
-
 	bool bIsSearchingForPlayer;
+	
+	bool bSeenPlayer;	
 	bool bWantsToVent;
 	bool bWantsToHunt;
 	bool bIsHostile;
-
-
+	
 	FNavLocation RandomLocationToSearch;
 
 	virtual void BeginPlay() override;
-
 
 	UPROPERTY()
 	APawn* HuntedPawn;
 	UPROPERTY()
 	APawn* ControlledPawn;
+	
 	UPROPERTY()
 	AMonsterCharacter* MonsterCharacter;
 
@@ -176,6 +191,28 @@ protected:
 	TArray<AActor*> VentActors;
 	UPROPERTY()
 	UNavigationSystemV1* NavSys;
+
+	void GetNewAction();
+
+	TArray<FNavLocation> NavPoints;
+	UPROPERTY(EditAnywhere)
+	int PlacesToSearch;
+
+	void GetNextNavPoint();
+	int NavPointIndex;
+	FNavLocation NextPoint;
+	FNavLocation BacktrackPoint;
+	FNavLocation LastPoint;
+	bool bTravellingToPoint;
+	
+	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
+	FTimerHandle TH_FailedMovement;
+
+	UPROPERTY()
+	AGodCharacter* GodPlayer;
+	
+	float DotProductToOtherActor(AActor* OtherActor);
+	float GetDistanceToOther(AActor* TheOther) const;
 
 public:
 	// I trust Rider with whatever this extra stuff is
@@ -203,11 +240,17 @@ public:
 	// @TODO: DisableMonster()
 	void EnterVent();
 	void ExitVent();
+
+	// NextState is set by monster and can be triggered as new/current
+	// when vent is finally reached
+	void SetNextState();
 	// @TODO: did not know timer can be set with function params
 	void StartEscaping();
 	void Escape();
 	void SetNewState(EMonsterState NewState, APawn* PawnHunted);
 
 	void PrepareToSearch();
+	void FillNavPoints(FNavLocation& NewLocation);
 	void LookAround();
+	void WanderVents();
 };

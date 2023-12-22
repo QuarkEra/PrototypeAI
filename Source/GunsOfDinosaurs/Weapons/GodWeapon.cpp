@@ -5,10 +5,14 @@
 
 #include "GodCharacter.h"
 #include "GodGameInstance.h"
+#include "MonsterCharacter.h"
+#include "Components/PointLightComponent.h"
 #include "Engine/DamageEvents.h"
 #include "GunsOfDinosaurs/GunsOfDinosaurs.h"
 #include "Kismet/GameplayStatics.h"
-#include <AI_MonsterController.h>
+#include "GunsOfDinosaurs/GunsOfDinosaurs.h"
+
+#include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 AGodWeapon::AGodWeapon()
@@ -22,6 +26,18 @@ AGodWeapon::AGodWeapon()
 	// primary ammo is default
 	CurrentAmmoType = EAmmoType::Primary;
 	bHasAmmo = true;
+
+	SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Comp"));
+	RootComponent = SceneComponent;
+	
+	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Skeletal Mesh"));
+	SkeletalMesh->SetupAttachment(RootComponent);
+	
+	MuzzleParticleEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Muzzle Particle Effect"));
+	MuzzleParticleEffect->SetupAttachment(SkeletalMesh);
+
+	PointLightComponent = CreateDefaultSubobject<UPointLightComponent>(TEXT("Light Effect"));
+	PointLightComponent->SetupAttachment(SkeletalMesh);
 	
 }
 
@@ -107,6 +123,19 @@ bool AGodWeapon::IsHasAmmo() const
 	return bHasAmmo;
 }
 
+void AGodWeapon::CauseDamageToValidActor(AActor* HitCharacter)
+{
+	if (HitCharacter != nullptr)
+	{
+		APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+		if (PlayerPawn != nullptr)
+		{
+			//UGameplayStatics::ApplyPointDamage(HitCharacter, 1, CameraForwardVector, Hit, PlayerPawn->GetInstigatorController(), this, DamageType);
+			UGameplayStatics::ApplyDamage(HitCharacter, 2, PlayerPawn->GetInstigatorController(), this, DamageType);
+		}
+	}
+}
+
 void AGodWeapon::Shoot()
 {
 	// null checks
@@ -128,45 +157,73 @@ void AGodWeapon::Shoot()
 		return;
 	}
 
-	// Hit scan and associated functions
+	// LineTrace
+	FHitResult Hit;
+	
+	
 	if (bIsHitScanWeapon)
 	{
-		FHitResult Hit;
 		DoHitScan(Hit);
+		
+		// Handle Damage
+		const FDamageEvent DamageEvent;
+		AActor* HitCharacter = Hit.GetActor();
+		if (HitCharacter)
+		{
+			CauseDamageToValidActor(HitCharacter);
+		}
+		
 		// Particles are here due to checking for vulnerable headshots in hit scan
 		UParticleSystem* SelectedEffect;
 		DoPhysicalSurfaceGetFromHitScan(Hit, SelectedEffect);
+	}
+	if (bFlame)
+	{
+		DoHitScan(Hit);
 		
+		// Handle Damage
 		const FDamageEvent DamageEvent;
 		AActor* HitCharacter = Hit.GetActor();
-
-		if (HitCharacter != nullptr)
+		if (HitCharacter)
 		{
-			
-			
-			FVector CameraForwardVector;
-			
-			if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
-			{
-				CameraForwardVector = PC->GetControlRotation().Vector();
-			}
-
-			APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-			if (PlayerPawn != nullptr)
-			{
-				UE_LOG(LogTemp, Display, TEXT("Damage applied next"))
-				UGameplayStatics::ApplyPointDamage(HitCharacter, 1, CameraForwardVector, Hit, PlayerPawn->GetInstigatorController(), this, DamageType);
-				UGameplayStatics::ApplyDamage(HitCharacter, 2, PlayerPawn->GetInstigatorController(), this, DamageType);
-			}
-
-			
+			CauseDamageToValidActor(HitCharacter);
+		}
+		
+		//FHitResult SweepHit;
+		//GetWorld()->SweepSingleByChannel(SweepHit, ActorLocation, TraceEndLocation, GetActorQuat(), ECC_EngineTraceChannel1, SphereCollider, QueryParams);		
+		
+		if (MuzzleParticleEffect)
+		{
+			MuzzleParticleEffect->ActivateSystem(true);
 		}
 	}
-
+	if (PointLightComponent)
+	{
+		PointLightComponent->ToggleVisibility(true);
+	}
+	
+	
 	// audio components activated
 	SoundSelectionByAmmoType(Character);
+}
 
-	return;
+void AGodWeapon::StopShoot()
+{
+	if (bFlame)
+	{
+		if (MuzzleParticleEffect)
+		{
+			// This was the old and busted way i guess
+			// its what searching the web gave me
+			//MuzzleParticleEffect->ActivateSystem(false);
+			// new hotness i suppose
+			MuzzleParticleEffect->DeactivateSystem();
+		}
+	}
+	if (PointLightComponent)
+	{
+		PointLightComponent->ToggleVisibility(false);
+	}
 }
 
 void AGodWeapon::CycleAmmoType()
